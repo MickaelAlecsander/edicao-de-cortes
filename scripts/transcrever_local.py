@@ -41,7 +41,7 @@ def seg(s):
 
 
 def audio(src, a, b):
-    raw = subprocess.run(["ffmpeg", "-v", "error", "-ss", "%.3f" % a, "-t", "%.3f" % (b - a), "-i", src, "-vn", "-ac", "1",
+    raw = subprocess.run(["ffmpeg", "-v", "error", "-i", src, "-ss", "%.3f" % a, "-t", "%.3f" % (b - a), "-vn", "-ac", "1",
                           "-ar", str(SR), "-f", "s16le", "-"], capture_output=True, check=True).stdout
     return np.frombuffer(raw, np.int16).astype(np.float32) / 32768
 

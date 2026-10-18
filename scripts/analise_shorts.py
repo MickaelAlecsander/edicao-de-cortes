@@ -13,7 +13,7 @@ As respostas contam à parte: thread com muita resposta é discussão ou briga (
 Limite: a ligação é por palavra. Ironia, emoji e comentário sobre o Raul (e não sobre a fala) ficam em "geral". A leitura
 dos comentários é o juiz; o mapa só aponta onde olhar (a mesma lição da REGUA.md: contar palavra não mede o trecho).
 
-Grava `_pesquisa/shorts_analise/bruto/` (info enxuta + legenda pt-orig), `_pesquisa/shorts_analise/<id>.json` (métricas,
+Grava `_pesquisa/shorts_analise/bruto/` (info enxuta + legenda original pt.*-orig), `_pesquisa/shorts_analise/<id>.json` (métricas,
 frases com peso, comentários com a frase ligada) e `_pesquisa/shorts_analise/relatorio.md`.
 """
 import html
@@ -89,13 +89,16 @@ def vid(arg):
 
 
 def baixar(i):
-    """Uma chamada do yt-dlp por short: metadados + comentários (top) + legenda automática pt-orig. 429: espera e tenta de novo."""
+    """Uma chamada do yt-dlp por short: metadados + comentários (top) + legenda automática original (pt.*-orig).
+    429: PARA TUDO, sem nova tentativa (um IP marcado só volta com tempo; ver references/pesquisa-e-download.md)."""
     cmd = ["yt-dlp", "--skip-download", "--no-simulate", "--force-overwrites", "--write-info-json", "--write-comments",
-           "--write-auto-subs", "--sub-langs", "pt-orig", "--extractor-args", "youtube:max_comments=300,all,30;comment_sort=top",
+           "--write-auto-subs", "--sub-langs", "pt.*-orig", "--extractor-args", "youtube:max_comments=300,all,30;comment_sort=top",
            "-o", os.path.join(BRUTO, "%(id)s.%(ext)s"), "https://www.youtube.com/shorts/" + i]
-    for espera in (60, 180, 0):
+    for _ in (1,):
         r = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=600)
         info_p = os.path.join(BRUTO, i + ".info.json")
+        if "429" in r.stderr or "Too Many Requests" in r.stderr:
+            raise SystemExit(f"⛔ {i}: 429 (Too Many Requests). Parar tudo agora e só voltar depois de horas; rodar de novo com --cache usa o que já veio.")
         if r.returncode == 0 and os.path.exists(info_p):
             info = json.load(open(info_p, encoding="utf-8"))
             enxuta = {k: info.get(k) for k in CAMPOS}
@@ -106,9 +109,6 @@ def baixar(i):
             json.dump(enxuta, open(info_p, "w", encoding="utf-8"), ensure_ascii=False)
             return True
         print(f"  {i}: falhou ({(r.stderr.strip().splitlines() or ['?'])[-1][:160]})", flush=True)
-        if espera:
-            print(f"  esperando {espera} s", flush=True)
-            time.sleep(espera)
     return False
 
 
@@ -167,8 +167,8 @@ def ligar(coments, fr):
 
 def analisar(i):
     info = json.load(open(os.path.join(BRUTO, i + ".info.json"), encoding="utf-8"))
-    vtt = os.path.join(BRUTO, i + ".pt-orig.vtt")
-    fr = frases(palavras_vtt(vtt)) if os.path.exists(vtt) else []
+    vtt = next((os.path.join(BRUTO, f) for f in sorted(os.listdir(BRUTO)) if f.startswith(i + ".pt") and f.endswith("-orig.vtt")), "")
+    fr = frases(palavras_vtt(vtt)) if vtt else []
     todos = info.get("comments") or []
     resp = {}
     for c in todos:
@@ -232,7 +232,7 @@ def relatorio(rs):
               f"{r['url']} · {r['data']} · {r['duracao']} s · {mil(r['views'])} views · {r['likes_mil']} likes/mil · "
               f"{r['coment_mil']} coment./mil · {r['baixados']} comentários baixados", ""]
         if not r["tem_legenda"]:
-            L.append("Sem legenda pt-orig: só os comentários abaixo.")
+            L.append("Sem legenda original em português: só os comentários abaixo.")
         quentes = sorted([f for f in r["frases"] if f["peso"]], key=lambda f: -f["peso"])[:6]
         if quentes:
             L += ["**Frases mais quentes**", "", "| tempo | peso | % | coment. | respostas | frase |", "|---|---|---|---|---|---|"]

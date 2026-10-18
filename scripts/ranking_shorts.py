@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Ranking dos shorts do Raul para o post das 11h: chance de viralizar × quão pouco foi reproduzido por outros.
+"""Ranking dos shorts do Raul para os posts do dia: chance de viralizar × quão pouco foi reproduzido por outros.
 
     python $S/ranking_shorts.py            # lista nova + buscas (lento: 1 busca a cada 8 s; as já feitas ficam no cache)
     python $S/ranking_shorts.py --cache    # refaz só a conta com a lista e as buscas já salvas
@@ -42,6 +42,8 @@ def parecido(a, b):
 def buscar(titulo):
     out = subprocess.run(["yt-dlp", "--extractor-args", "youtube:player_client=web_safari,mweb", "--flat-playlist", "-J", "ytsearch15:" + titulo], capture_output=True, text=True,
                          encoding="utf-8", timeout=120)
+    if "429" in out.stderr or "Too Many Requests" in out.stderr:
+        raise SystemExit("⛔ 429 (Too Many Requests) na busca. Parar tudo agora e só voltar depois de horas; as buscas já feitas ficam no cache.")
     if out.returncode:
         return None
     return [{"t": e.get("title") or "", "c": e.get("channel") or e.get("uploader") or "", "id": e.get("id")}
@@ -82,7 +84,7 @@ def main():
         e["nota"] = e["viral"] - 0.35 * min(e["copias"], 6)
 
     top = sorted(cand, key=lambda e: -e["nota"])[:100]
-    linhas = ["# Ranking dos shorts para o post das 11h", "",
+    linhas = ["# Ranking dos shorts para os posts do dia", "",
               f"Gerado por `ferramentas/ranking_shorts.py` · {len(E)} shorts no canal · {len(usados & {e['id'] for e in E})} já usados.",
               "Nota = viralização (views e quanto furou a bolha da época) − 0,35 por cópia de outros canais na busca do YouTube.",
               "", "| # | Nota | Views | × época | Cópias | Idade (posição) | Título | Link |", "|---|---|---|---|---|---|---|---|"]
