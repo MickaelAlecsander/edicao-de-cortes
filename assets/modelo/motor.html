@@ -1,0 +1,1646 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <script src="assets/dados.js"></script>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: #1e1b2e; }
+      #root { position: relative; width: 100%; height: 100%; overflow: hidden; background: #1e1b2e; }
+
+      /* ── Raul (60% de baixo) ──────────────────────────────── */
+      #raul-janela { position: absolute; left: 0; top: 768px; width: 1080px; height: 1152px; overflow: hidden; }
+      #raul-cam { position: absolute; inset: 0; transform-origin: 50% 32%; }
+      #raul { position: absolute; inset: 0; width: 1080px; height: 1152px; object-fit: cover; }
+
+      #grafico-fundo { position: absolute; left: 0; top: 768px; width: 1080px; height: 1152px; background: #1e1b2e; }
+      #grafico { position: absolute; left: 0; top: 1040px; width: 1080px; height: 608px; object-fit: cover; }
+
+      /* ── borda rasgada: sombra e fibra por baixo da folha ─── */
+      #rasgo { position: absolute; left: 0; top: 0; width: 1080px; height: 1060px; pointer-events: none; }
+      #rasgo-sombra { filter: blur(7px); opacity: 0.55; }
+
+      /* ── a folha de cima: o mundo de papel ────────────────── */
+      #topo { position: absolute; left: 0; top: 0; width: 1080px; height: 798px; overflow: hidden;
+        background: #efe6d3 url(assets/papel.png) repeat; }
+      #tremor { position: absolute; inset: 0; }
+      #mundo { position: absolute; left: 0; top: 0; width: 32000px; height: 1300px; transform-origin: 0 0; will-change: transform; }
+      #mesa { position: absolute; left: -6000px; top: -5000px; width: 46000px; height: 11000px; background: #efe6d3 url(assets/papel.png) repeat; }
+      #grao {
+        position: absolute; inset: 0; background: url(assets/grao.png) repeat;
+        mix-blend-mode: overlay; opacity: 0.5; pointer-events: none;
+      }
+      #vinheta {
+        position: absolute; inset: 0; pointer-events: none;
+        background: radial-gradient(ellipse 75% 70% at 50% 45%, rgba(30, 27, 46, 0) 60%, rgba(30, 27, 46, 0.16) 100%);
+      }
+      .cena { position: absolute; top: 0; width: 1080px; height: 800px; }
+      .o { position: absolute; will-change: transform; }
+      .o > svg, .o > .b > svg { display: block; overflow: visible; }
+      .som { filter: drop-shadow(0 7px 0 rgba(30, 27, 46, 0.16)) drop-shadow(0 16px 14px rgba(30, 27, 46, 0.14)); }
+      .b { position: relative; }
+      .mono { font-family: "IBM Plex Mono", monospace; font-weight: 700; color: #1e1b2e; letter-spacing: 0.02em; line-height: 1.2; }
+
+      /* etiquetas, carimbos e números do mundo de papel */
+      .tag { font-family: "Archivo Black", sans-serif; line-height: 1; text-align: center; white-space: nowrap; }
+      .tag > span { display: inline-block; background: #f8f2e4; color: #1e1b2e; padding: 10px 18px 8px; border-radius: 5px;
+        box-shadow: 0 5px 0 rgba(30, 27, 46, 0.22), 0 12px 16px rgba(30, 27, 46, 0.18); }
+      .tagt > span { background: #1e1b2e; color: #f8f2e4; }
+      .tagv > span { background: #e5432d; color: #f8f2e4; }
+      .taga > span { background: #2c56a0; color: #f8f2e4; }
+      .selo, .interro { font-family: "Archivo Black", sans-serif; line-height: 1; text-align: center; white-space: nowrap; color: #e5432d;
+        -webkit-mask-image: url(assets/grao.png); mask-image: url(assets/grao.png); -webkit-mask-size: 260px; mask-size: 260px; }
+      .selo > span { display: inline-block; border: 7px solid currentColor; border-radius: 12px; padding: 8px 20px 4px; }
+      .seloa { color: #2c56a0; }
+      .num { font-family: "Archivo Black", sans-serif; line-height: 1; text-align: center; color: #1e1b2e; }
+      .rotl { font-family: "Archivo Black", sans-serif; line-height: 1.05; text-align: center; color: #1e1b2e; }
+
+      /* aba de capítulo (fixa na tela, fora do mundo) */
+      #hud { position: absolute; left: 0; top: 0; width: 1080px; height: 200px; pointer-events: none; }
+      .cap { position: absolute; left: 24px; top: 22px; display: flex; align-items: stretch; transform-origin: 0 50%; }
+      .cap span { font-family: "Archivo Black", sans-serif; line-height: 1; box-shadow: 0 5px 0 rgba(30, 27, 46, 0.25), 0 14px 18px rgba(30, 27, 46, 0.22); }
+      .cap-n { background: #e5432d; color: #f8f2e4; font-size: 40px; padding: 12px 14px 8px; border-radius: 6px 0 0 6px; }
+      .cap-n small { font-size: 22px; opacity: 0.8; }
+      .cap-t { background: #f8f2e4; color: #1e1b2e; font-size: 32px; padding: 16px 20px 10px; border-radius: 0 6px 6px 0; }
+      .cap-esp { background: #1e1b2e; color: #f8f2e4; border-radius: 6px; }
+
+      /* ── legenda: etiqueta de papel na divisória ──────────── */
+      #leg { position: absolute; left: 0; top: 698px; width: 1080px; height: 140px; pointer-events: none; }
+      .etq {
+        position: absolute; left: 50%; top: 50%; padding: 14px 34px 16px;
+        background: #f8f2e4; border-radius: 6px; white-space: nowrap;
+        box-shadow: 0 7px 0 rgba(30, 27, 46, 0.28), 0 18px 24px rgba(30, 27, 46, 0.25);
+        font-family: "Archivo Black", sans-serif; color: #1e1b2e; line-height: 1;
+        letter-spacing: -0.01em; text-transform: uppercase; opacity: 0;
+      }
+      .etq span { display: inline-block; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="238.25" data-width="1080" data-height="1920">
+      <div id="raul-janela">
+        <div id="raul-cam">
+          <video id="raul" class="clip" data-start="0" data-duration="238.25" data-track-index="0"
+            src="assets/raul.mp4" muted playsinline></video>
+        </div>
+      </div>
+      <audio id="raul-audio" data-start="0" data-duration="238.25" data-track-index="1" src="assets/raul.wav" data-volume="1"></audio>
+      <!-- sfx:inicio -->
+      <audio id="sfx-00" data-start="0.000" data-duration="0.575" data-track-index="10" src="assets/sfx/whoosh-short.wav" data-volume="0.30"></audio>
+      <audio id="sfx-01" data-start="1.298" data-duration="0.366" data-track-index="11" src="assets/sfx/click-soft.wav" data-volume="0.20"></audio>
+      <audio id="sfx-02" data-start="1.388" data-duration="0.366" data-track-index="12" src="assets/sfx/click-soft.wav" data-volume="0.20"></audio>
+      <audio id="sfx-03" data-start="1.478" data-duration="0.366" data-track-index="13" src="assets/sfx/click-soft.wav" data-volume="0.20"></audio>
+      <audio id="sfx-04" data-start="0.958" data-duration="2.400" data-media-start="7.600" data-track-index="14" src="assets/sfx/riser.wav" data-volume="0.20"></audio>
+      <audio id="sfx-05" data-start="2.418" data-duration="0.450" data-track-index="15" src="assets/sfx/papel.wav" data-volume="0.25"></audio>
+      <audio id="sfx-06" data-start="3.358" data-duration="0.160" data-track-index="16" src="assets/sfx/carimbo.wav" data-volume="0.55"></audio>
+      <audio id="sfx-07" data-start="3.358" data-duration="2.116" data-track-index="17" src="assets/sfx/impact-bass-1.wav" data-volume="0.35"></audio>
+      <audio id="sfx-08" data-start="4.788" data-duration="0.450" data-track-index="18" src="assets/sfx/papel.wav" data-volume="0.30"></audio>
+      <audio id="sfx-09" data-start="4.988" data-duration="0.720" data-track-index="19" src="assets/sfx/pop.wav" data-volume="0.12"></audio>
+      <audio id="sfx-10" data-start="5.108" data-duration="0.720" data-track-index="20" src="assets/sfx/pop.wav" data-volume="0.12"></audio>
+      <audio id="sfx-11" data-start="5.228" data-duration="0.720" data-track-index="21" src="assets/sfx/pop.wav" data-volume="0.12"></audio>
+      <audio id="sfx-12" data-start="5.348" data-duration="0.720" data-track-index="22" src="assets/sfx/pop.wav" data-volume="0.12"></audio>
+      <audio id="sfx-13" data-start="5.525" data-duration="0.575" data-track-index="23" src="assets/sfx/whoosh-short.wav" data-volume="0.30"></audio>
+      <audio id="sfx-14" data-start="5.935" data-duration="0.450" data-track-index="24" src="assets/sfx/papel.wav" data-volume="0.22"></audio>
+      <audio id="sfx-15" data-start="7.318" data-duration="0.366" data-track-index="25" src="assets/sfx/click.wav" data-volume="0.45"></audio>
+      <audio id="sfx-16" data-start="7.538" data-duration="0.575" data-track-index="26" src="assets/sfx/whoosh-short.wav" data-volume="0.25"></audio>
+      <audio id="sfx-17" data-start="10.018" data-duration="0.720" data-track-index="27" src="assets/sfx/pop.wav" data-volume="0.20"></audio>
+      <audio id="sfx-18" data-start="11.448" data-duration="0.450" data-track-index="28" src="assets/sfx/papel.wav" data-volume="0.30"></audio>
+      <audio id="sfx-19" data-start="12.228" data-duration="0.450" data-track-index="29" src="assets/sfx/papel.wav" data-volume="0.30"></audio>
+      <audio id="sfx-20" data-start="13.008" data-duration="0.450" data-track-index="30" src="assets/sfx/papel.wav" data-volume="0.30"></audio>
+      <audio id="sfx-21" data-start="13.358" data-duration="0.575" data-track-index="31" src="assets/sfx/whoosh-short.wav" data-volume="0.30"></audio>
+      <audio id="sfx-22" data-start="13.768" data-duration="0.450" data-track-index="32" src="assets/sfx/papel.wav" data-volume="0.22"></audio>
+      <audio id="sfx-23" data-start="16.280" data-duration="0.575" data-track-index="33" src="assets/sfx/whoosh-short.wav" data-volume="0.25"></audio>
+      <audio id="sfx-24" data-start="17.220" data-duration="0.366" data-track-index="34" src="assets/sfx/click.wav" data-volume="0.50"></audio>
+      <audio id="sfx-25" data-start="17.260" data-duration="0.160" data-track-index="35" src="assets/sfx/carimbo.wav" data-volume="0.60"></audio>
+      <audio id="sfx-26" data-start="17.260" data-duration="2.592" data-track-index="36" src="assets/sfx/impact-bass-2.wav" data-volume="0.30"></audio>
+      <audio id="sfx-27" data-start="18.508" data-duration="0.450" data-track-index="37" src="assets/sfx/papel.wav" data-volume="0.28"></audio>
+      <audio id="sfx-28" data-start="19.733" data-duration="0.160" data-track-index="38" src="assets/sfx/carimbo.wav" data-volume="0.50"></audio>
+      <audio id="sfx-29" data-start="20.753" data-duration="0.720" data-track-index="39" src="assets/sfx/pop.wav" data-volume="0.18"></audio>
+      <audio id="sfx-30" data-start="21.393" data-duration="0.366" data-track-index="40" src="assets/sfx/click.wav" data-volume="0.50"></audio>
+      <audio id="sfx-31" data-start="21.473" data-duration="0.700" data-track-index="41" src="assets/sfx/rasgo.wav" data-volume="0.30"></audio>
+      <audio id="sfx-32" data-start="21.650" data-duration="0.575" data-track-index="42" src="assets/sfx/whoosh-short.wav" data-volume="0.20"></audio>
+      <audio id="sfx-33" data-start="23.813" data-duration="0.366" data-track-index="43" src="assets/sfx/click-soft.wav" data-volume="0.14"></audio>
+      <audio id="sfx-34" data-start="24.053" data-duration="0.366" data-track-index="44" src="assets/sfx/click-soft.wav" data-volume="0.14"></audio>
+      <audio id="sfx-35" data-start="24.293" data-duration="0.366" data-track-index="45" src="assets/sfx/click-soft.wav" data-volume="0.14"></audio>
+      <audio id="sfx-36" data-start="24.533" data-duration="0.366" data-track-index="46" src="assets/sfx/click-soft.wav" data-volume="0.14"></audio>
+      <audio id="sfx-37" data-start="24.773" data-duration="0.366" data-track-index="47" src="assets/sfx/click-soft.wav" data-volume="0.14"></audio>
+      <audio id="sfx-38" data-start="25.013" data-duration="0.366" data-track-index="48" src="assets/sfx/click-soft.wav" data-volume="0.14"></audio>
+      <audio id="sfx-39" data-start="25.253" data-duration="0.366" data-track-index="49" src="assets/sfx/click-soft.wav" data-volume="0.14"></audio>
+      <audio id="sfx-40" data-start="25.493" data-duration="0.366" data-track-index="50" src="assets/sfx/click-soft.wav" data-volume="0.14"></audio>
+      <audio id="sfx-41" data-start="25.733" data-duration="0.366" data-track-index="51" src="assets/sfx/click-soft.wav" data-volume="0.14"></audio>
+      <audio id="sfx-42" data-start="25.973" data-duration="0.366" data-track-index="52" src="assets/sfx/click-soft.wav" data-volume="0.14"></audio>
+      <audio id="sfx-43" data-start="25.093" data-duration="0.160" data-track-index="53" src="assets/sfx/carimbo.wav" data-volume="0.55"></audio>
+      <audio id="sfx-44" data-start="26.453" data-duration="0.720" data-track-index="54" src="assets/sfx/pop.wav" data-volume="0.18"></audio>
+      <audio id="sfx-45" data-start="28.273" data-duration="0.720" data-track-index="55" src="assets/sfx/pop.wav" data-volume="0.20"></audio>
+      <audio id="sfx-46" data-start="28.923" data-duration="0.575" data-track-index="56" src="assets/sfx/whoosh-short.wav" data-volume="0.20"></audio>
+      <audio id="sfx-47" data-start="30.083" data-duration="0.160" data-track-index="57" src="assets/sfx/carimbo.wav" data-volume="0.50"></audio>
+      <audio id="sfx-48" data-start="30.858" data-duration="0.575" data-track-index="58" src="assets/sfx/whoosh-short.wav" data-volume="0.30"></audio>
+      <audio id="sfx-49" data-start="31.268" data-duration="0.450" data-track-index="59" src="assets/sfx/papel.wav" data-volume="0.22"></audio>
+      <audio id="sfx-50" data-start="32.263" data-duration="0.720" data-track-index="60" src="assets/sfx/pop.wav" data-volume="0.18"></audio>
+      <audio id="sfx-51" data-start="32.583" data-duration="0.450" data-track-index="61" src="assets/sfx/papel.wav" data-volume="0.22"></audio>
+      <audio id="sfx-52" data-start="34.853" data-duration="0.366" data-track-index="62" src="assets/sfx/click-soft.wav" data-volume="0.30"></audio>
+      <audio id="sfx-53" data-start="35.103" data-duration="0.720" data-track-index="63" src="assets/sfx/pop.wav" data-volume="0.18"></audio>
+      <audio id="sfx-54" data-start="36.203" data-duration="0.720" data-track-index="64" src="assets/sfx/pop.wav" data-volume="0.20"></audio>
+      <audio id="sfx-55" data-start="36.983" data-duration="0.366" data-track-index="65" src="assets/sfx/click-soft.wav" data-volume="0.18"></audio>
+      <audio id="sfx-56" data-start="37.123" data-duration="0.366" data-track-index="66" src="assets/sfx/click-soft.wav" data-volume="0.18"></audio>
+      <audio id="sfx-57" data-start="37.263" data-duration="0.366" data-track-index="67" src="assets/sfx/click-soft.wav" data-volume="0.18"></audio>
+      <audio id="sfx-58" data-start="39.230" data-duration="0.366" data-track-index="68" src="assets/sfx/click-soft.wav" data-volume="0.30"></audio>
+      <audio id="sfx-59" data-start="39.520" data-duration="0.366" data-track-index="69" src="assets/sfx/click.wav" data-volume="0.30"></audio>
+      <audio id="sfx-60" data-start="41.030" data-duration="0.160" data-track-index="70" src="assets/sfx/carimbo.wav" data-volume="0.40"></audio>
+      <audio id="sfx-61" data-start="44.120" data-duration="0.720" data-track-index="71" src="assets/sfx/pop.wav" data-volume="0.18"></audio>
+      <audio id="sfx-62" data-start="44.460" data-duration="0.450" data-track-index="72" src="assets/sfx/papel.wav" data-volume="0.22"></audio>
+      <audio id="sfx-63" data-start="45.540" data-duration="0.366" data-track-index="73" src="assets/sfx/click-soft.wav" data-volume="0.30"></audio>
+      <audio id="sfx-64" data-start="47.240" data-duration="0.720" data-track-index="74" src="assets/sfx/pop.wav" data-volume="0.20"></audio>
+      <audio id="sfx-65" data-start="49.760" data-duration="0.366" data-track-index="75" src="assets/sfx/click-soft.wav" data-volume="0.18"></audio>
+      <audio id="sfx-66" data-start="49.900" data-duration="0.366" data-track-index="76" src="assets/sfx/click-soft.wav" data-volume="0.18"></audio>
+      <audio id="sfx-67" data-start="50.040" data-duration="0.366" data-track-index="77" src="assets/sfx/click-soft.wav" data-volume="0.18"></audio>
+      <audio id="sfx-68" data-start="50.300" data-duration="0.366" data-track-index="78" src="assets/sfx/click-soft.wav" data-volume="0.30"></audio>
+      <audio id="sfx-69" data-start="50.400" data-duration="0.366" data-track-index="79" src="assets/sfx/click.wav" data-volume="0.30"></audio>
+      <audio id="sfx-70" data-start="51.000" data-duration="0.160" data-track-index="80" src="assets/sfx/carimbo.wav" data-volume="0.40"></audio>
+      <audio id="sfx-71" data-start="53.540" data-duration="0.720" data-track-index="81" src="assets/sfx/pop.wav" data-volume="0.20"></audio>
+      <audio id="sfx-72" data-start="54.600" data-duration="0.720" data-track-index="82" src="assets/sfx/pop.wav" data-volume="0.20"></audio>
+      <audio id="sfx-73" data-start="57.240" data-duration="0.160" data-track-index="83" src="assets/sfx/carimbo.wav" data-volume="0.70"></audio>
+      <audio id="sfx-74" data-start="57.240" data-duration="2.116" data-track-index="84" src="assets/sfx/impact-bass-1.wav" data-volume="0.50"></audio>
+      <audio id="sfx-75" data-start="60.692" data-duration="0.575" data-track-index="85" src="assets/sfx/whoosh-short.wav" data-volume="0.30"></audio>
+      <audio id="sfx-76" data-start="61.102" data-duration="0.450" data-track-index="86" src="assets/sfx/papel.wav" data-volume="0.22"></audio>
+      <audio id="sfx-77" data-start="61.092" data-duration="0.720" data-track-index="87" src="assets/sfx/pop.wav" data-volume="0.20"></audio>
+      <audio id="sfx-78" data-start="62.278" data-duration="0.450" data-track-index="88" src="assets/sfx/papel.wav" data-volume="0.22"></audio>
+      <audio id="sfx-79" data-start="63.538" data-duration="0.450" data-track-index="89" src="assets/sfx/papel.wav" data-volume="0.22"></audio>
+      <audio id="sfx-80" data-start="61.718" data-duration="0.720" data-track-index="90" src="assets/sfx/pop.wav" data-volume="0.18"></audio>
+      <audio id="sfx-81" data-start="64.998" data-duration="0.366" data-track-index="91" src="assets/sfx/click.wav" data-volume="0.50"></audio>
+      <audio id="sfx-82" data-start="67.918" data-duration="0.575" data-track-index="92" src="assets/sfx/whoosh-short.wav" data-volume="0.20"></audio>
+      <audio id="sfx-83" data-start="68.068" data-duration="0.720" data-track-index="93" src="assets/sfx/pop.wav" data-volume="0.18"></audio>
+      <audio id="sfx-84" data-start="71.388" data-duration="0.160" data-track-index="94" src="assets/sfx/carimbo.wav" data-volume="0.55"></audio>
+      <audio id="sfx-85" data-start="72.692" data-duration="0.575" data-track-index="95" src="assets/sfx/whoosh-short.wav" data-volume="0.20"></audio>
+      <audio id="sfx-86" data-start="75.900" data-duration="0.450" data-track-index="96" src="assets/sfx/papel.wav" data-volume="0.22"></audio>
+      <audio id="sfx-87" data-start="76.800" data-duration="0.450" data-track-index="97" src="assets/sfx/papel.wav" data-volume="0.22"></audio>
+      <audio id="sfx-88" data-start="77.500" data-duration="0.700" data-track-index="98" src="assets/sfx/rasgo.wav" data-volume="0.35"></audio>
+      <audio id="sfx-89" data-start="77.900" data-duration="2.592" data-track-index="99" src="assets/sfx/impact-bass-2.wav" data-volume="0.25"></audio>
+      <audio id="sfx-90" data-start="78.030" data-duration="0.720" data-track-index="100" src="assets/sfx/pop.wav" data-volume="0.20"></audio>
+      <audio id="sfx-91" data-start="79.110" data-duration="0.720" data-track-index="101" src="assets/sfx/pop.wav" data-volume="0.20"></audio>
+      <audio id="sfx-92" data-start="80.860" data-duration="0.160" data-track-index="102" src="assets/sfx/carimbo.wav" data-volume="0.55"></audio>
+      <audio id="sfx-93" data-start="82.025" data-duration="0.575" data-track-index="103" src="assets/sfx/whoosh-short.wav" data-volume="0.30"></audio>
+      <audio id="sfx-94" data-start="82.435" data-duration="0.450" data-track-index="104" src="assets/sfx/papel.wav" data-volume="0.22"></audio>
+      <audio id="sfx-95" data-start="82.425" data-duration="0.450" data-track-index="105" src="assets/sfx/papel.wav" data-volume="0.28"></audio>
+      <audio id="sfx-96" data-start="84.565" data-duration="0.160" data-track-index="106" src="assets/sfx/carimbo.wav" data-volume="0.50"></audio>
+      <audio id="sfx-97" data-start="85.695" data-duration="0.450" data-track-index="107" src="assets/sfx/papel.wav" data-volume="0.30"></audio>
+      <audio id="sfx-98" data-start="87.805" data-duration="0.160" data-track-index="108" src="assets/sfx/carimbo.wav" data-volume="0.50"></audio>
+      <audio id="sfx-99" data-start="89.653" data-duration="0.720" data-track-index="109" src="assets/sfx/pop.wav" data-volume="0.20"></audio>
+      <audio id="sfx-100" data-start="90.343" data-duration="0.720" data-track-index="110" src="assets/sfx/pop.wav" data-volume="0.20"></audio>
+      <audio id="sfx-101" data-start="90.723" data-duration="0.700" data-track-index="111" src="assets/sfx/rasgo.wav" data-volume="0.55"></audio>
+      <audio id="sfx-102" data-start="91.567" data-duration="0.575" data-track-index="112" src="assets/sfx/whoosh-short.wav" data-volume="0.20"></audio>
+      <audio id="sfx-103" data-start="91.883" data-duration="0.720" data-track-index="113" src="assets/sfx/pop.wav" data-volume="0.20"></audio>
+      <audio id="sfx-104" data-start="93.543" data-duration="2.592" data-track-index="114" src="assets/sfx/impact-bass-2.wav" data-volume="0.40"></audio>
+      <audio id="sfx-105" data-start="94.793" data-duration="0.160" data-track-index="115" src="assets/sfx/carimbo.wav" data-volume="0.55"></audio>
+      <audio id="sfx-106" data-start="96.703" data-duration="0.366" data-track-index="116" src="assets/sfx/click-soft.wav" data-volume="0.18"></audio>
+      <audio id="sfx-107" data-start="96.803" data-duration="0.366" data-track-index="117" src="assets/sfx/click-soft.wav" data-volume="0.18"></audio>
+      <audio id="sfx-108" data-start="96.903" data-duration="0.366" data-track-index="118" src="assets/sfx/click-soft.wav" data-volume="0.18"></audio>
+      <audio id="sfx-109" data-start="97.003" data-duration="0.366" data-track-index="119" src="assets/sfx/click-soft.wav" data-volume="0.18"></audio>
+      <audio id="sfx-110" data-start="97.103" data-duration="0.366" data-track-index="120" src="assets/sfx/click-soft.wav" data-volume="0.18"></audio>
+      <audio id="sfx-111" data-start="97.733" data-duration="0.575" data-track-index="121" src="assets/sfx/whoosh-short.wav" data-volume="0.30"></audio>
+      <audio id="sfx-112" data-start="98.143" data-duration="0.450" data-track-index="122" src="assets/sfx/papel.wav" data-volume="0.22"></audio>
+      <audio id="sfx-113" data-start="98.638" data-duration="0.450" data-track-index="123" src="assets/sfx/papel.wav" data-volume="0.18"></audio>
+      <audio id="sfx-114" data-start="98.758" data-duration="0.450" data-track-index="124" src="assets/sfx/papel.wav" data-volume="0.18"></audio>
+      <audio id="sfx-115" data-start="98.878" data-duration="0.450" data-track-index="125" src="assets/sfx/papel.wav" data-volume="0.18"></audio>
+      <audio id="sfx-116" data-start="98.998" data-duration="0.450" data-track-index="126" src="assets/sfx/papel.wav" data-volume="0.18"></audio>
+      <audio id="sfx-117" data-start="101.318" data-duration="0.720" data-track-index="127" src="assets/sfx/pop.wav" data-volume="0.18"></audio>
+      <audio id="sfx-118" data-start="102.778" data-duration="0.720" data-track-index="128" src="assets/sfx/pop.wav" data-volume="0.18"></audio>
+      <audio id="sfx-119" data-start="103.698" data-duration="0.720" data-track-index="129" src="assets/sfx/pop.wav" data-volume="0.18"></audio>
+      <audio id="sfx-120" data-start="104.778" data-duration="0.720" data-track-index="130" src="assets/sfx/pop.wav" data-volume="0.18"></audio>
+      <audio id="sfx-121" data-start="100.918" data-duration="0.720" data-track-index="131" src="assets/sfx/pop.wav" data-volume="0.20"></audio>
+      <audio id="sfx-122" data-start="105.525" data-duration="0.575" data-track-index="132" src="assets/sfx/whoosh-short.wav" data-volume="0.30"></audio>
+      <audio id="sfx-123" data-start="105.935" data-duration="0.450" data-track-index="133" src="assets/sfx/papel.wav" data-volume="0.22"></audio>
+      <audio id="sfx-124" data-start="105.905" data-duration="0.450" data-track-index="134" src="assets/sfx/papel.wav" data-volume="0.28"></audio>
+      <audio id="sfx-125" data-start="106.697" data-duration="0.575" data-track-index="135" src="assets/sfx/whoosh-short.wav" data-volume="0.18"></audio>
+      <audio id="sfx-126" data-start="106.797" data-duration="0.720" data-track-index="136" src="assets/sfx/pop.wav" data-volume="0.18"></audio>
+      <audio id="sfx-127" data-start="108.008" data-duration="0.720" data-track-index="137" src="assets/sfx/pop.wav" data-volume="0.20"></audio>
+      <audio id="sfx-128" data-start="110.755" data-duration="0.720" data-track-index="138" src="assets/sfx/pop.wav" data-volume="0.16"></audio>
+      <audio id="sfx-129" data-start="110.905" data-duration="0.720" data-track-index="139" src="assets/sfx/pop.wav" data-volume="0.16"></audio>
+      <audio id="sfx-130" data-start="112.095" data-duration="0.720" data-track-index="140" src="assets/sfx/pop.wav" data-volume="0.16"></audio>
+      <audio id="sfx-131" data-start="112.955" data-duration="0.720" data-track-index="141" src="assets/sfx/pop.wav" data-volume="0.16"></audio>
+      <audio id="sfx-132" data-start="113.715" data-duration="0.366" data-track-index="142" src="assets/sfx/click-soft.wav" data-volume="0.16"></audio>
+      <audio id="sfx-133" data-start="113.795" data-duration="0.366" data-track-index="143" src="assets/sfx/click-soft.wav" data-volume="0.16"></audio>
+      <audio id="sfx-134" data-start="113.875" data-duration="0.366" data-track-index="144" src="assets/sfx/click-soft.wav" data-volume="0.16"></audio>
+      <audio id="sfx-135" data-start="113.955" data-duration="0.366" data-track-index="145" src="assets/sfx/click-soft.wav" data-volume="0.16"></audio>
+      <audio id="sfx-136" data-start="114.015" data-duration="0.720" data-track-index="146" src="assets/sfx/pop.wav" data-volume="0.18"></audio>
+      <audio id="sfx-137" data-start="114.295" data-duration="0.450" data-track-index="147" src="assets/sfx/papel.wav" data-volume="0.30"></audio>
+      <audio id="sfx-138" data-start="114.650" data-duration="0.575" data-track-index="148" src="assets/sfx/whoosh-short.wav" data-volume="0.20"></audio>
+      <audio id="sfx-139" data-start="115.838" data-duration="0.366" data-track-index="149" src="assets/sfx/click.wav" data-volume="0.50"></audio>
+      <audio id="sfx-140" data-start="115.938" data-duration="0.160" data-track-index="150" src="assets/sfx/carimbo.wav" data-volume="0.60"></audio>
+      <audio id="sfx-141" data-start="116.942" data-duration="0.575" data-track-index="151" src="assets/sfx/whoosh-short.wav" data-volume="0.20"></audio>
+      <audio id="sfx-142" data-start="117.292" data-duration="0.450" data-track-index="152" src="assets/sfx/papel.wav" data-volume="0.25"></audio>
+      <audio id="sfx-143" data-start="117.683" data-duration="0.160" data-track-index="153" src="assets/sfx/carimbo.wav" data-volume="0.55"></audio>
+      <audio id="sfx-144" data-start="119.923" data-duration="0.366" data-track-index="154" src="assets/sfx/click-soft.wav" data-volume="0.16"></audio>
+      <audio id="sfx-145" data-start="119.993" data-duration="0.366" data-track-index="155" src="assets/sfx/click-soft.wav" data-volume="0.16"></audio>
+      <audio id="sfx-146" data-start="120.063" data-duration="0.366" data-track-index="156" src="assets/sfx/click-soft.wav" data-volume="0.16"></audio>
+      <audio id="sfx-147" data-start="120.133" data-duration="0.366" data-track-index="157" src="assets/sfx/click-soft.wav" data-volume="0.16"></audio>
+      <audio id="sfx-148" data-start="120.203" data-duration="0.366" data-track-index="158" src="assets/sfx/click-soft.wav" data-volume="0.16"></audio>
+      <audio id="sfx-149" data-start="120.273" data-duration="0.366" data-track-index="159" src="assets/sfx/click-soft.wav" data-volume="0.16"></audio>
+      <audio id="sfx-150" data-start="120.343" data-duration="0.366" data-track-index="160" src="assets/sfx/click-soft.wav" data-volume="0.16"></audio>
+      <audio id="sfx-151" data-start="121.183" data-duration="0.575" data-track-index="161" src="assets/sfx/whoosh-short.wav" data-volume="0.20"></audio>
+      <audio id="sfx-152" data-start="121.753" data-duration="0.720" data-track-index="162" src="assets/sfx/pop.wav" data-volume="0.20"></audio>
+      <audio id="sfx-153" data-start="125.483" data-duration="0.720" data-track-index="163" src="assets/sfx/pop.wav" data-volume="0.14"></audio>
+      <audio id="sfx-154" data-start="125.603" data-duration="0.720" data-track-index="164" src="assets/sfx/pop.wav" data-volume="0.14"></audio>
+      <audio id="sfx-155" data-start="125.723" data-duration="0.720" data-track-index="165" src="assets/sfx/pop.wav" data-volume="0.14"></audio>
+      <audio id="sfx-156" data-start="126.423" data-duration="0.366" data-track-index="166" src="assets/sfx/click-soft.wav" data-volume="0.16"></audio>
+      <audio id="sfx-157" data-start="126.483" data-duration="0.366" data-track-index="167" src="assets/sfx/click-soft.wav" data-volume="0.16"></audio>
+      <audio id="sfx-158" data-start="126.543" data-duration="0.366" data-track-index="168" src="assets/sfx/click-soft.wav" data-volume="0.16"></audio>
+      <audio id="sfx-159" data-start="126.603" data-duration="0.366" data-track-index="169" src="assets/sfx/click-soft.wav" data-volume="0.16"></audio>
+      <audio id="sfx-160" data-start="126.663" data-duration="0.366" data-track-index="170" src="assets/sfx/click-soft.wav" data-volume="0.16"></audio>
+      <audio id="sfx-161" data-start="126.723" data-duration="0.366" data-track-index="171" src="assets/sfx/click-soft.wav" data-volume="0.16"></audio>
+      <audio id="sfx-162" data-start="126.783" data-duration="0.366" data-track-index="172" src="assets/sfx/click-soft.wav" data-volume="0.16"></audio>
+      <audio id="sfx-163" data-start="126.843" data-duration="0.366" data-track-index="173" src="assets/sfx/click-soft.wav" data-volume="0.16"></audio>
+      <audio id="sfx-164" data-start="127.033" data-duration="0.160" data-track-index="174" src="assets/sfx/carimbo.wav" data-volume="0.55"></audio>
+      <audio id="sfx-165" data-start="128.275" data-duration="0.575" data-track-index="175" src="assets/sfx/whoosh-short.wav" data-volume="0.30"></audio>
+      <audio id="sfx-166" data-start="128.685" data-duration="0.450" data-track-index="176" src="assets/sfx/papel.wav" data-volume="0.22"></audio>
+      <audio id="sfx-167" data-start="129.725" data-duration="0.720" data-track-index="177" src="assets/sfx/pop.wav" data-volume="0.20"></audio>
+      <audio id="sfx-168" data-start="130.275" data-duration="0.720" data-track-index="178" src="assets/sfx/pop.wav" data-volume="0.18"></audio>
+      <audio id="sfx-169" data-start="131.355" data-duration="0.720" data-track-index="179" src="assets/sfx/pop.wav" data-volume="0.20"></audio>
+      <audio id="sfx-170" data-start="132.035" data-duration="0.450" data-track-index="180" src="assets/sfx/papel.wav" data-volume="0.25"></audio>
+      <audio id="sfx-171" data-start="132.875" data-duration="0.720" data-track-index="181" src="assets/sfx/pop.wav" data-volume="0.20"></audio>
+      <audio id="sfx-172" data-start="134.065" data-duration="0.160" data-track-index="182" src="assets/sfx/carimbo.wav" data-volume="0.65"></audio>
+      <audio id="sfx-173" data-start="134.442" data-duration="0.575" data-track-index="183" src="assets/sfx/whoosh-short.wav" data-volume="0.30"></audio>
+      <audio id="sfx-174" data-start="134.852" data-duration="0.450" data-track-index="184" src="assets/sfx/papel.wav" data-volume="0.22"></audio>
+      <audio id="sfx-175" data-start="134.842" data-duration="0.366" data-track-index="185" src="assets/sfx/click-soft.wav" data-volume="0.16"></audio>
+      <audio id="sfx-176" data-start="134.922" data-duration="0.366" data-track-index="186" src="assets/sfx/click-soft.wav" data-volume="0.16"></audio>
+      <audio id="sfx-177" data-start="135.002" data-duration="0.366" data-track-index="187" src="assets/sfx/click-soft.wav" data-volume="0.16"></audio>
+      <audio id="sfx-178" data-start="135.933" data-duration="0.160" data-track-index="188" src="assets/sfx/carimbo.wav" data-volume="0.50"></audio>
+      <audio id="sfx-179" data-start="137.703" data-duration="0.720" data-track-index="189" src="assets/sfx/pop.wav" data-volume="0.18"></audio>
+      <audio id="sfx-180" data-start="138.153" data-duration="0.366" data-track-index="190" src="assets/sfx/click-soft.wav" data-volume="0.18"></audio>
+      <audio id="sfx-181" data-start="138.323" data-duration="0.366" data-track-index="191" src="assets/sfx/click-soft.wav" data-volume="0.18"></audio>
+      <audio id="sfx-182" data-start="138.493" data-duration="0.366" data-track-index="192" src="assets/sfx/click-soft.wav" data-volume="0.18"></audio>
+      <audio id="sfx-183" data-start="138.663" data-duration="0.366" data-track-index="193" src="assets/sfx/click-soft.wav" data-volume="0.18"></audio>
+      <audio id="sfx-184" data-start="138.833" data-duration="0.366" data-track-index="194" src="assets/sfx/click-soft.wav" data-volume="0.18"></audio>
+      <audio id="sfx-185" data-start="139.103" data-duration="0.720" data-track-index="195" src="assets/sfx/pop.wav" data-volume="0.20"></audio>
+      <audio id="sfx-186" data-start="139.623" data-duration="0.575" data-track-index="196" src="assets/sfx/whoosh-short.wav" data-volume="0.20"></audio>
+      <audio id="sfx-187" data-start="139.923" data-duration="0.450" data-track-index="197" src="assets/sfx/papel.wav" data-volume="0.25"></audio>
+      <audio id="sfx-188" data-start="140.963" data-duration="0.366" data-track-index="198" src="assets/sfx/click.wav" data-volume="0.40"></audio>
+      <audio id="sfx-189" data-start="141.113" data-duration="0.366" data-track-index="199" src="assets/sfx/click.wav" data-volume="0.40"></audio>
+      <audio id="sfx-190" data-start="141.263" data-duration="0.366" data-track-index="200" src="assets/sfx/click.wav" data-volume="0.40"></audio>
+      <audio id="sfx-191" data-start="141.933" data-duration="0.720" data-track-index="201" src="assets/sfx/pop.wav" data-volume="0.18"></audio>
+      <audio id="sfx-192" data-start="143.103" data-duration="0.450" data-track-index="202" src="assets/sfx/papel.wav" data-volume="0.30"></audio>
+      <audio id="sfx-193" data-start="144.525" data-duration="0.575" data-track-index="203" src="assets/sfx/whoosh-short.wav" data-volume="0.20"></audio>
+      <audio id="sfx-194" data-start="146.010" data-duration="0.720" data-track-index="204" src="assets/sfx/pop.wav" data-volume="0.14"></audio>
+      <audio id="sfx-195" data-start="146.090" data-duration="0.720" data-track-index="205" src="assets/sfx/pop.wav" data-volume="0.14"></audio>
+      <audio id="sfx-196" data-start="146.170" data-duration="0.720" data-track-index="206" src="assets/sfx/pop.wav" data-volume="0.14"></audio>
+      <audio id="sfx-197" data-start="146.250" data-duration="0.720" data-track-index="207" src="assets/sfx/pop.wav" data-volume="0.14"></audio>
+      <audio id="sfx-198" data-start="146.330" data-duration="0.720" data-track-index="208" src="assets/sfx/pop.wav" data-volume="0.14"></audio>
+      <audio id="sfx-199" data-start="147.020" data-duration="0.720" data-track-index="209" src="assets/sfx/pop.wav" data-volume="0.20"></audio>
+      <audio id="sfx-200" data-start="149.550" data-duration="0.720" data-track-index="210" src="assets/sfx/pop.wav" data-volume="0.20"></audio>
+      <audio id="sfx-201" data-start="150.490" data-duration="0.366" data-track-index="211" src="assets/sfx/click-soft.wav" data-volume="0.14"></audio>
+      <audio id="sfx-202" data-start="150.610" data-duration="0.366" data-track-index="212" src="assets/sfx/click-soft.wav" data-volume="0.14"></audio>
+      <audio id="sfx-203" data-start="150.730" data-duration="0.366" data-track-index="213" src="assets/sfx/click-soft.wav" data-volume="0.14"></audio>
+      <audio id="sfx-204" data-start="151.530" data-duration="0.720" data-track-index="214" src="assets/sfx/pop.wav" data-volume="0.20"></audio>
+      <audio id="sfx-205" data-start="152.490" data-duration="0.450" data-track-index="215" src="assets/sfx/papel.wav" data-volume="0.20"></audio>
+      <audio id="sfx-206" data-start="152.590" data-duration="0.450" data-track-index="216" src="assets/sfx/papel.wav" data-volume="0.20"></audio>
+      <audio id="sfx-207" data-start="152.690" data-duration="0.450" data-track-index="217" src="assets/sfx/papel.wav" data-volume="0.20"></audio>
+      <audio id="sfx-208" data-start="152.790" data-duration="0.450" data-track-index="218" src="assets/sfx/papel.wav" data-volume="0.20"></audio>
+      <audio id="sfx-209" data-start="152.890" data-duration="0.450" data-track-index="219" src="assets/sfx/papel.wav" data-volume="0.20"></audio>
+      <audio id="sfx-210" data-start="152.990" data-duration="0.450" data-track-index="220" src="assets/sfx/papel.wav" data-volume="0.20"></audio>
+      <audio id="sfx-211" data-start="152.817" data-duration="0.575" data-track-index="221" src="assets/sfx/whoosh-short.wav" data-volume="0.30"></audio>
+      <audio id="sfx-212" data-start="153.227" data-duration="0.450" data-track-index="222" src="assets/sfx/papel.wav" data-volume="0.22"></audio>
+      <audio id="sfx-213" data-start="154.533" data-duration="0.575" data-track-index="223" src="assets/sfx/whoosh-short.wav" data-volume="0.18"></audio>
+      <audio id="sfx-214" data-start="155.093" data-duration="0.720" data-track-index="224" src="assets/sfx/pop.wav" data-volume="0.25"></audio>
+      <audio id="sfx-215" data-start="156.193" data-duration="0.366" data-track-index="225" src="assets/sfx/click-soft.wav" data-volume="0.16"></audio>
+      <audio id="sfx-216" data-start="156.313" data-duration="0.366" data-track-index="226" src="assets/sfx/click-soft.wav" data-volume="0.16"></audio>
+      <audio id="sfx-217" data-start="156.433" data-duration="0.366" data-track-index="227" src="assets/sfx/click-soft.wav" data-volume="0.16"></audio>
+      <audio id="sfx-218" data-start="156.793" data-duration="0.720" data-track-index="228" src="assets/sfx/pop.wav" data-volume="0.14"></audio>
+      <audio id="sfx-219" data-start="156.913" data-duration="0.720" data-track-index="229" src="assets/sfx/pop.wav" data-volume="0.14"></audio>
+      <audio id="sfx-220" data-start="157.033" data-duration="0.720" data-track-index="230" src="assets/sfx/pop.wav" data-volume="0.14"></audio>
+      <audio id="sfx-221" data-start="157.203" data-duration="0.575" data-track-index="231" src="assets/sfx/whoosh-short.wav" data-volume="0.20"></audio>
+      <audio id="sfx-222" data-start="157.403" data-duration="0.450" data-track-index="232" src="assets/sfx/papel.wav" data-volume="0.25"></audio>
+      <audio id="sfx-223" data-start="159.693" data-duration="0.720" data-track-index="233" src="assets/sfx/pop.wav" data-volume="0.20"></audio>
+      <audio id="sfx-224" data-start="161.033" data-duration="0.720" data-track-index="234" src="assets/sfx/pop.wav" data-volume="0.20"></audio>
+      <audio id="sfx-225" data-start="162.025" data-duration="0.575" data-track-index="235" src="assets/sfx/whoosh-short.wav" data-volume="0.20"></audio>
+      <audio id="sfx-226" data-start="163.338" data-duration="0.160" data-track-index="236" src="assets/sfx/carimbo.wav" data-volume="0.50"></audio>
+      <audio id="sfx-227" data-start="163.618" data-duration="0.720" data-track-index="237" src="assets/sfx/pop.wav" data-volume="0.18"></audio>
+      <audio id="sfx-228" data-start="166.638" data-duration="0.720" data-track-index="238" src="assets/sfx/pop.wav" data-volume="0.18"></audio>
+      <audio id="sfx-229" data-start="168.858" data-duration="0.575" data-track-index="239" src="assets/sfx/whoosh-short.wav" data-volume="0.30"></audio>
+      <audio id="sfx-230" data-start="169.138" data-duration="2.116" data-track-index="240" src="assets/sfx/impact-bass-1.wav" data-volume="0.60"></audio>
+      <audio id="sfx-231" data-start="170.108" data-duration="0.575" data-track-index="241" src="assets/sfx/whoosh-short.wav" data-volume="0.30"></audio>
+      <audio id="sfx-232" data-start="170.518" data-duration="0.450" data-track-index="242" src="assets/sfx/papel.wav" data-volume="0.22"></audio>
+      <audio id="sfx-233" data-start="171.057" data-duration="0.575" data-track-index="243" src="assets/sfx/whoosh-short.wav" data-volume="0.25"></audio>
+      <audio id="sfx-234" data-start="171.987" data-duration="0.366" data-track-index="244" src="assets/sfx/click-soft.wav" data-volume="0.14"></audio>
+      <audio id="sfx-235" data-start="172.077" data-duration="0.366" data-track-index="245" src="assets/sfx/click-soft.wav" data-volume="0.14"></audio>
+      <audio id="sfx-236" data-start="172.167" data-duration="0.366" data-track-index="246" src="assets/sfx/click-soft.wav" data-volume="0.14"></audio>
+      <audio id="sfx-237" data-start="172.257" data-duration="0.366" data-track-index="247" src="assets/sfx/click-soft.wav" data-volume="0.14"></audio>
+      <audio id="sfx-238" data-start="172.347" data-duration="0.366" data-track-index="248" src="assets/sfx/click-soft.wav" data-volume="0.14"></audio>
+      <audio id="sfx-239" data-start="172.437" data-duration="0.366" data-track-index="249" src="assets/sfx/click-soft.wav" data-volume="0.14"></audio>
+      <audio id="sfx-240" data-start="174.807" data-duration="0.450" data-track-index="250" src="assets/sfx/papel.wav" data-volume="0.30"></audio>
+      <audio id="sfx-241" data-start="175.027" data-duration="0.366" data-track-index="251" src="assets/sfx/click-soft.wav" data-volume="0.16"></audio>
+      <audio id="sfx-242" data-start="175.117" data-duration="0.366" data-track-index="252" src="assets/sfx/click-soft.wav" data-volume="0.16"></audio>
+      <audio id="sfx-243" data-start="175.207" data-duration="0.366" data-track-index="253" src="assets/sfx/click-soft.wav" data-volume="0.16"></audio>
+      <audio id="sfx-244" data-start="175.297" data-duration="0.366" data-track-index="254" src="assets/sfx/click-soft.wav" data-volume="0.16"></audio>
+      <audio id="sfx-245" data-start="175.387" data-duration="0.366" data-track-index="255" src="assets/sfx/click-soft.wav" data-volume="0.16"></audio>
+      <audio id="sfx-246" data-start="175.477" data-duration="0.366" data-track-index="256" src="assets/sfx/click-soft.wav" data-volume="0.16"></audio>
+      <audio id="sfx-247" data-start="175.567" data-duration="0.366" data-track-index="257" src="assets/sfx/click-soft.wav" data-volume="0.16"></audio>
+      <audio id="sfx-248" data-start="175.787" data-duration="0.720" data-track-index="258" src="assets/sfx/pop.wav" data-volume="0.18"></audio>
+      <audio id="sfx-249" data-start="177.007" data-duration="0.720" data-track-index="259" src="assets/sfx/pop.wav" data-volume="0.18"></audio>
+      <audio id="sfx-250" data-start="177.233" data-duration="0.575" data-track-index="260" src="assets/sfx/whoosh-short.wav" data-volume="0.20"></audio>
+      <audio id="sfx-251" data-start="177.583" data-duration="0.450" data-track-index="261" src="assets/sfx/papel.wav" data-volume="0.25"></audio>
+      <audio id="sfx-252" data-start="179.572" data-duration="0.575" data-track-index="262" src="assets/sfx/whoosh-short.wav" data-volume="0.15"></audio>
+      <audio id="sfx-253" data-start="180.592" data-duration="0.160" data-track-index="263" src="assets/sfx/carimbo.wav" data-volume="0.55"></audio>
+      <audio id="sfx-254" data-start="182.323" data-duration="2.592" data-track-index="264" src="assets/sfx/impact-bass-2.wav" data-volume="0.45"></audio>
+      <audio id="sfx-255" data-start="184.803" data-duration="0.720" data-track-index="265" src="assets/sfx/pop.wav" data-volume="0.22"></audio>
+      <audio id="sfx-256" data-start="187.763" data-duration="0.160" data-track-index="266" src="assets/sfx/carimbo.wav" data-volume="0.55"></audio>
+      <audio id="sfx-257" data-start="188.400" data-duration="0.575" data-track-index="267" src="assets/sfx/whoosh-short.wav" data-volume="0.30"></audio>
+      <audio id="sfx-258" data-start="188.810" data-duration="0.450" data-track-index="268" src="assets/sfx/papel.wav" data-volume="0.22"></audio>
+      <audio id="sfx-259" data-start="189.315" data-duration="0.450" data-track-index="269" src="assets/sfx/papel.wav" data-volume="0.25"></audio>
+      <audio id="sfx-260" data-start="192.675" data-duration="0.720" data-track-index="270" src="assets/sfx/pop.wav" data-volume="0.18"></audio>
+      <audio id="sfx-261" data-start="193.575" data-duration="0.720" data-track-index="271" src="assets/sfx/pop.wav" data-volume="0.18"></audio>
+      <audio id="sfx-262" data-start="197.875" data-duration="0.720" data-track-index="272" src="assets/sfx/pop.wav" data-volume="0.18"></audio>
+      <audio id="sfx-263" data-start="199.815" data-duration="0.720" data-track-index="273" src="assets/sfx/pop.wav" data-volume="0.16"></audio>
+      <audio id="sfx-264" data-start="200.635" data-duration="0.720" data-track-index="274" src="assets/sfx/pop.wav" data-volume="0.16"></audio>
+      <audio id="sfx-265" data-start="201.595" data-duration="0.720" data-track-index="275" src="assets/sfx/pop.wav" data-volume="0.18"></audio>
+      <audio id="sfx-266" data-start="201.695" data-duration="0.720" data-track-index="276" src="assets/sfx/pop.wav" data-volume="0.18"></audio>
+      <audio id="sfx-267" data-start="202.545" data-duration="2.592" data-track-index="277" src="assets/sfx/impact-bass-2.wav" data-volume="0.25"></audio>
+      <audio id="sfx-268" data-start="202.595" data-duration="0.720" data-track-index="278" src="assets/sfx/pop.wav" data-volume="0.20"></audio>
+      <audio id="sfx-269" data-start="203.067" data-duration="0.575" data-track-index="279" src="assets/sfx/whoosh-short.wav" data-volume="0.20"></audio>
+      <audio id="sfx-270" data-start="203.437" data-duration="0.450" data-track-index="280" src="assets/sfx/papel.wav" data-volume="0.25"></audio>
+      <audio id="sfx-271" data-start="204.257" data-duration="0.366" data-track-index="281" src="assets/sfx/click-soft.wav" data-volume="0.20"></audio>
+      <audio id="sfx-272" data-start="204.417" data-duration="0.366" data-track-index="282" src="assets/sfx/click-soft.wav" data-volume="0.20"></audio>
+      <audio id="sfx-273" data-start="204.577" data-duration="0.366" data-track-index="283" src="assets/sfx/click-soft.wav" data-volume="0.20"></audio>
+      <audio id="sfx-274" data-start="204.737" data-duration="0.366" data-track-index="284" src="assets/sfx/click-soft.wav" data-volume="0.20"></audio>
+      <audio id="sfx-275" data-start="207.347" data-duration="0.720" data-track-index="285" src="assets/sfx/pop.wav" data-volume="0.20"></audio>
+      <audio id="sfx-276" data-start="207.317" data-duration="0.575" data-track-index="286" src="assets/sfx/whoosh-short.wav" data-volume="0.20"></audio>
+      <audio id="sfx-277" data-start="209.012" data-duration="0.450" data-track-index="287" src="assets/sfx/papel.wav" data-volume="0.25"></audio>
+      <audio id="sfx-278" data-start="210.672" data-duration="0.450" data-track-index="288" src="assets/sfx/papel.wav" data-volume="0.25"></audio>
+      <audio id="sfx-279" data-start="211.532" data-duration="0.450" data-track-index="289" src="assets/sfx/papel.wav" data-volume="0.20"></audio>
+      <audio id="sfx-280" data-start="211.702" data-duration="0.450" data-track-index="290" src="assets/sfx/papel.wav" data-volume="0.20"></audio>
+      <audio id="sfx-281" data-start="211.872" data-duration="0.450" data-track-index="291" src="assets/sfx/papel.wav" data-volume="0.20"></audio>
+      <audio id="sfx-282" data-start="212.042" data-duration="0.450" data-track-index="292" src="assets/sfx/papel.wav" data-volume="0.20"></audio>
+      <audio id="sfx-283" data-start="212.212" data-duration="0.450" data-track-index="293" src="assets/sfx/papel.wav" data-volume="0.20"></audio>
+      <audio id="sfx-284" data-start="216.468" data-duration="0.720" data-track-index="294" src="assets/sfx/pop.wav" data-volume="0.20"></audio>
+      <audio id="sfx-285" data-start="217.428" data-duration="0.450" data-track-index="295" src="assets/sfx/papel.wav" data-volume="0.25"></audio>
+      <audio id="sfx-286" data-start="221.228" data-duration="2.116" data-track-index="296" src="assets/sfx/impact-bass-1.wav" data-volume="0.55"></audio>
+      <audio id="sfx-287" data-start="221.092" data-duration="1.800" data-media-start="1.600" data-track-index="297" src="assets/sfx/whoosh-cinematic.wav" data-volume="0.30"></audio>
+      <audio id="sfx-288" data-start="221.852" data-duration="0.450" data-track-index="298" src="assets/sfx/papel.wav" data-volume="0.22"></audio>
+      <audio id="sfx-289" data-start="224.793" data-duration="0.720" data-track-index="299" src="assets/sfx/pop.wav" data-volume="0.20"></audio>
+      <audio id="sfx-290" data-start="225.433" data-duration="0.366" data-track-index="300" src="assets/sfx/click-soft.wav" data-volume="0.20"></audio>
+      <audio id="sfx-291" data-start="225.553" data-duration="0.366" data-track-index="301" src="assets/sfx/click-soft.wav" data-volume="0.20"></audio>
+      <audio id="sfx-292" data-start="226.573" data-duration="0.160" data-track-index="302" src="assets/sfx/carimbo.wav" data-volume="0.70"></audio>
+      <audio id="sfx-293" data-start="226.643" data-duration="0.366" data-track-index="303" src="assets/sfx/click-soft.wav" data-volume="0.14"></audio>
+      <audio id="sfx-294" data-start="226.713" data-duration="0.366" data-track-index="304" src="assets/sfx/click-soft.wav" data-volume="0.14"></audio>
+      <audio id="sfx-295" data-start="226.783" data-duration="0.366" data-track-index="305" src="assets/sfx/click-soft.wav" data-volume="0.14"></audio>
+      <audio id="sfx-296" data-start="226.853" data-duration="0.366" data-track-index="306" src="assets/sfx/click-soft.wav" data-volume="0.14"></audio>
+      <audio id="sfx-297" data-start="226.923" data-duration="0.366" data-track-index="307" src="assets/sfx/click-soft.wav" data-volume="0.14"></audio>
+      <audio id="sfx-298" data-start="226.993" data-duration="0.366" data-track-index="308" src="assets/sfx/click-soft.wav" data-volume="0.14"></audio>
+      <audio id="sfx-299" data-start="227.063" data-duration="0.366" data-track-index="309" src="assets/sfx/click-soft.wav" data-volume="0.14"></audio>
+      <audio id="sfx-300" data-start="227.133" data-duration="0.366" data-track-index="310" src="assets/sfx/click-soft.wav" data-volume="0.14"></audio>
+      <audio id="sfx-301" data-start="227.203" data-duration="0.366" data-track-index="311" src="assets/sfx/click-soft.wav" data-volume="0.14"></audio>
+      <audio id="sfx-302" data-start="232.933" data-duration="0.700" data-track-index="312" src="assets/sfx/rasgo.wav" data-volume="0.45"></audio>
+      <audio id="sfx-303" data-start="233.953" data-duration="0.720" data-track-index="313" src="assets/sfx/pop.wav" data-volume="0.20"></audio>
+      <audio id="sfx-304" data-start="236.173" data-duration="0.575" data-track-index="314" src="assets/sfx/whoosh-short.wav" data-volume="0.30"></audio>
+      <audio id="sfx-305" data-start="236.373" data-duration="1.877" data-track-index="315" src="assets/sfx/impact-bass-1.wav" data-volume="0.65"></audio>
+      <audio id="sfx-306" data-start="236.393" data-duration="0.160" data-track-index="316" src="assets/sfx/carimbo.wav" data-volume="0.60"></audio>
+      <!-- sfx:fim -->
+
+      <!-- gráfico que o próprio vídeo do Raul põe no lugar dele: inteiro, não recortado -->
+      <div id="grafico-fundo" class="clip" data-start="44.542" data-duration="8.833" data-track-index="4"></div>
+      <video id="grafico" class="clip" data-start="44.542" data-duration="8.833" data-track-index="5"
+        src="assets/grafico_gini.mp4" muted playsinline></video>
+
+      <svg id="rasgo" viewBox="0 0 1080 1060">
+        <path id="rasgo-sombra" fill="#1e1b2e" d="" />
+        <path id="rasgo-fibra" fill="#f8f2e4" d="" />
+      </svg>
+
+      <div id="topo" class="clip" data-start="0" data-duration="238.25" data-track-index="2">
+        <div id="tremor">
+          <div id="mundo" data-layout-allow-overflow><div id="mesa" data-layout-allow-overflow></div></div>
+        </div>
+        <div id="vinheta"></div>
+        <div id="hud" data-layout-allow-overflow></div>
+        <div id="grao"></div>
+      </div>
+
+      <div id="leg" class="clip" data-start="0" data-duration="238.25" data-track-index="3"></div>
+    </div>
+
+    <script>
+      (function () {
+        const D = window.DADOS;
+        const DUR = 238.25;
+        const C = {
+          papel: "#efe6d3", claro: "#f8f2e4", kraft: "#d6c3a0", kraft2: "#bfa77d", tinta: "#1e1b2e",
+          verm: "#e5432d", verm2: "#b9301f", azul: "#2c56a0", azul2: "#1f3f7a", rosa: "#f2a7a0", rosa2: "#e2857d",
+          amar: "#e9b23a", amar2: "#c98f1c",
+        };
+        const tl = gsap.timeline({ paused: true });
+        const $ = (s) => document.querySelector(s);
+        const mundo = $("#mundo");
+
+        // ── utilitários determinísticos ───────────────────────────────────────
+        const rnd = (i) => { const x = Math.sin(i * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
+        const norm = (s) => s.toLowerCase().replace(/[^a-zà-ú0-9%,]/g, "").replace(/^,+|,+$/g, "");
+        const B = {}; D.blocos.forEach((b) => (B[b.id] = b.inicio));
+        // instante em que a n-ésima ocorrência da palavra é DITA, procurando a partir do início do bloco
+        function W(txt, bloco, n = 1) {
+          const t0 = bloco ? B[bloco] - 0.06 : 0;
+          let k = 0;
+          for (const p of D.palavras) {
+            if (p.s < t0) continue;
+            if (norm(p.w) === norm(txt) && ++k === n) return p.s;
+          }
+          throw new Error("palavra não encontrada: " + txt + " (" + bloco + ")");
+        }
+        // stop-motion: o tempo anda em degraus de 12 qps, a curva continua a do ease base
+        // Até 10/10/2026 o S() andava em degraus de 12 por segundo (cara de stop-motion). O Mickael pediu o movimento fluido
+        // ("por mais que ela aconteça em blocos, as coisas têm que acontecer de uma maneira fluida… sem nada muito travado"):
+        // agora é a curva inteira, a 24 quadros. O nome fica, para as cenas antigas montarem igual.
+        function S(dur, base = "power2.out") {
+          return gsap.parseEase(base);
+        }
+        // "fervura" do stop-motion: o papel treme algumas vezes por segundo, sorteio fixo
+        function ferve(el, amp, seed, t0, t1, hz = 6) {
+          const n = Math.max(1, Math.round((t1 - t0) * hz));
+          tl.fromTo(el, { rotation: 0 }, {
+            rotation: amp, duration: t1 - t0, immediateRender: false,
+            ease: (t) => (t >= 1 ? 0 : rnd(seed * 977 + Math.floor(t * n)) * 2 - 1),
+          }, t0);
+        }
+        function pRet(w, h, seed, j = 2.6, passo = 38) {
+          const pts = [];
+          const lado = (x0, y0, x1, y1, k) => {
+            const n = Math.max(1, Math.round(Math.hypot(x1 - x0, y1 - y0) / passo));
+            for (let i = 0; i < n; i++) {
+              const t = i / n;
+              pts.push([x0 + (x1 - x0) * t + (rnd(seed + k * 97 + i) - 0.5) * 2 * j,
+                        y0 + (y1 - y0) * t + (rnd(seed + k * 53 + i + 7) - 0.5) * 2 * j]);
+            }
+          };
+          lado(0, 0, w, 0, 1); lado(w, 0, w, h, 2); lado(w, h, 0, h, 3); lado(0, h, 0, 0, 4);
+          return "M" + pts.map((p) => p[0].toFixed(1) + " " + p[1].toFixed(1)).join(" L") + " Z";
+        }
+        function pBolha(cx, cy, rx, ry, seed, j = 0.08, n = 22) {
+          const pts = [];
+          for (let i = 0; i < n; i++) {
+            const a = (i / n) * Math.PI * 2, r = 1 + (rnd(seed + i * 31) - 0.5) * 2 * j;
+            pts.push([cx + Math.cos(a) * rx * r, cy + Math.sin(a) * ry * r]);
+          }
+          return "M" + pts.map((p) => p[0].toFixed(1) + " " + p[1].toFixed(1)).join(" L") + " Z";
+        }
+        const svg = (w, h, inner) => `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">${inner}</svg>`;
+        const fT = (x, y, t, s, cor = C.tinta, a = "middle") =>
+          `<text x="${x}" y="${y}" text-anchor="${a}" font-family="Archivo Black" font-size="${s}" fill="${cor}">${t}</text>`;
+        const fM = (x, y, t, s, cor = C.tinta, a = "start", op = 1) =>
+          `<text x="${x}" y="${y}" text-anchor="${a}" font-family="IBM Plex Mono" font-weight="700" font-size="${s}" fill="${cor}" opacity="${op}">${t}</text>`;
+        const ic = (x, y, s, inner) => `<g transform="translate(${x} ${y}) scale(${s})">${inner}</g>`;
+
+        // ── objetos do mundo: cada cena guarda os seus para a fervura ─────────
+        const fervura = {};   // cena → [objetos que fervem]
+        let cenaAtual = 0;
+        function obj(pai, id, x, y, w, h, inner, sombra = true, ferver = true) {
+          const d = document.createElement("div");
+          d.className = "o" + (sombra ? " som" : "");
+          d.id = id;
+          d.dataset.layoutAllowOverflow = "";
+          d.style.left = x + "px"; d.style.top = y + "px"; d.style.width = w + "px"; d.style.height = h + "px";
+          d.innerHTML = `<div class="b">${inner.startsWith("<svg") ? inner : svg(w, h, inner)}</div>`;
+          pai.appendChild(d);
+          if (ferver) (fervura[cenaAtual] = fervura[cenaAtual] || []).push(d);
+          return d;
+        }
+        function rotulo(pai, id, x, y, w, html, cls, css = "") {
+          // carimbo: a máscara de grão só cobre a caixa do elemento, então ela ganha folga dos dois lados
+          if (/selo|interro/.test(cls)) { x -= 220; w += 440; }
+          const d = document.createElement("div");
+          d.className = "o " + cls; d.id = id; d.dataset.layoutAllowOverflow = "";
+          d.style.cssText = `left:${x}px;top:${y}px;width:${w}px;${css}`;
+          d.innerHTML = html;
+          pai.appendChild(d);
+          return d;
+        }
+        function grupo(pai, id, x, y, w, h) {
+          const d = document.createElement("div");
+          d.className = "o"; d.id = id; d.dataset.layoutAllowOverflow = "";
+          d.style.cssText = `left:${x}px;top:${y}px;width:${w}px;height:${h}px;`;
+          pai.appendChild(d);
+          return d;
+        }
+        const ST = [];
+        function cena(i, x, y) {
+          const c = document.createElement("div");
+          c.className = "cena"; c.id = "c" + i; c.style.left = x + "px"; c.style.top = y + "px"; c.dataset.layoutAllowOverflow = "";
+          mundo.appendChild(c);
+          ST[i] = { x, y };
+          cenaAtual = i;
+          return c;
+        }
+
+        // ── movimentos ────────────────────────────────────────────────────────
+        const aparece = (el, t, dur = 0.42, de = { scale: 0.4, y: 40 }) => {
+          tl.set(el, { autoAlpha: 0 }, 0);
+          tl.fromTo(el, Object.assign({ autoAlpha: 1, rotation: 0, x: 0 }, de),
+            { autoAlpha: 1, scale: 1, y: 0, x: 0, rotation: 0, duration: dur, ease: S(dur, "back.out(1.8)"), immediateRender: false }, t);
+        };
+        const some = (el, t, dur = 0.3, para = { y: 60, scale: 0.6 }) =>
+          tl.to(el, Object.assign({ autoAlpha: 0, duration: dur, ease: S(dur, "power2.in") }, para), t);
+        function treme(t, amp = 16, dur = 0.32, seed = 1) {
+          const n = Math.round(dur * 24);
+          tl.fromTo("#tremor", { x: 0, y: 0 }, {
+            x: amp, y: amp * 0.6, duration: dur, immediateRender: false,
+            ease: (p) => (p >= 1 ? 0 : (rnd(seed + Math.floor(p * n)) * 2 - 1) * (1 - p)),
+          }, t);
+        }
+        const carimba = (el, t, rot, big = 1, tremor = true) => {
+          tl.set(el, { autoAlpha: 0 }, 0);
+          tl.fromTo(el, { autoAlpha: 1, scale: 2.4 * big, rotation: rot - 8 }, { autoAlpha: 1, scale: 1, rotation: rot, duration: 0.18, ease: S(0.18, "power4.in"), immediateRender: false }, t - 0.12);
+          if (tremor) treme(t + 0.06, 7 * big, 0.2, Math.round(t * 10));
+        };
+        // tinta que se desenha (traço que avança)
+        function desenha(sel, t, dur, comp) {
+          const el = document.querySelector(sel);
+          el.style.strokeDasharray = comp + " " + comp;
+          tl.set(el, { attr: { "stroke-dashoffset": comp } }, 0);
+          tl.fromTo(el, { attr: { "stroke-dashoffset": comp } }, { attr: { "stroke-dashoffset": 0 }, duration: dur, ease: S(dur, "power1.inOut"), immediateRender: false }, t);
+        }
+        function revela(el, t, dur, de = "inset(100% 0% 0% 0%)") {
+          tl.set(el, { clipPath: de }, 0);
+          tl.fromTo(el, { clipPath: de }, { clipPath: "inset(0% 0% 0% 0%)", duration: dur, ease: S(dur, "power1.inOut"), immediateRender: false }, t);
+        }
+        const cai = (el, t, dx, dy, rot, dur = 0.6) =>
+          tl.to(el, { x: "+=" + dx, y: "+=" + dy, rotation: rot, duration: dur, ease: S(dur, "power2.in") }, t);
+
+        // ══════════════════════════════════════════════════════════════════════
+        // DESENHOS
+        // ══════════════════════════════════════════════════════════════════════
+        const moeda = (d, txt = "R$", face = C.claro, aro = C.kraft2, cor = C.tinta) =>
+          `<circle cx="${d / 2}" cy="${d / 2}" r="${d / 2 - 1}" fill="${aro}"/><circle cx="${d / 2}" cy="${d / 2}" r="${d / 2 - d * 0.11}" fill="${face}"/>${fT(d / 2, d / 2 + d * 0.12, txt, d * 0.32, cor)}`;
+        const moedaBTC = (d) => `<circle cx="${d / 2}" cy="${d / 2}" r="${d / 2 - 1}" fill="${C.amar2}"/><circle cx="${d / 2}" cy="${d / 2}" r="${d * 0.4}" fill="${C.amar}"/>
+          <rect x="${d * 0.4}" y="${d * 0.18}" width="${d * 0.05}" height="${d * 0.64}" fill="${C.claro}"/><rect x="${d * 0.52}" y="${d * 0.18}" width="${d * 0.05}" height="${d * 0.64}" fill="${C.claro}"/>
+          ${fT(d * 0.5, d * 0.69, "B", d * 0.5, C.claro)}`;
+        const notaMaco = (w, h) => `<rect width="${w}" height="${h}" rx="3" fill="${C.azul}"/><rect x="${w * 0.4}" width="${w * 0.2}" height="${h}" fill="${C.claro}"/><rect x="3" y="3" width="${w - 6}" height="${h - 6}" rx="2" fill="none" stroke="${C.claro}" stroke-width="1.5" opacity=".5"/>`;
+        function congresso(cup = true, tig = true) {
+          let s = `<rect x="0" y="246" width="460" height="22" fill="${C.kraft2}"/><rect x="196" y="20" width="26" height="228" fill="${C.kraft2}"/><rect x="238" y="20" width="26" height="228" fill="${C.kraft2}"/><rect x="222" y="104" width="16" height="16" fill="${C.kraft2}"/>`;
+          for (let i = 0; i < 9; i++) s += `<rect x="201" y="${32 + i * 22}" width="16" height="4" fill="${C.claro}" opacity=".5"/><rect x="243" y="${32 + i * 22}" width="16" height="4" fill="${C.claro}" opacity=".5"/>`;
+          if (cup) s += `<path d="M40 246 A72 52 0 0 1 184 246 Z" fill="${C.kraft2}"/>`;
+          if (tig) s += `<path d="M286 194 L454 194 C446 250, 294 250, 286 194 Z" fill="${C.kraft2}"/><rect x="360" y="234" width="20" height="14" fill="${C.kraft2}"/>`;
+          return s;
+        }
+        const pessoa = (w, h, cor, extra = "") =>
+          `<circle cx="${w / 2}" cy="${h * 0.16}" r="${h * 0.14}" fill="${cor}"/><path d="M${w * 0.08} ${h} L${w * 0.08} ${h * 0.5} Q${w * 0.08} ${h * 0.34} ${w * 0.3} ${h * 0.34} L${w * 0.7} ${h * 0.34} Q${w * 0.92} ${h * 0.34} ${w * 0.92} ${h * 0.5} L${w * 0.92} ${h} Z" fill="${cor}"/>${extra}`;
+        const gravata = (w, h, cor = C.verm) =>
+          `<path d="M${w / 2 - h * 0.035} ${h * 0.35} L${w / 2 + h * 0.035} ${h * 0.35} L${w / 2 + h * 0.05} ${h * 0.62} L${w / 2} ${h * 0.7} L${w / 2 - h * 0.05} ${h * 0.62} Z" fill="${cor}"/>`;
+        function multidao(w, h, n, linhas, cor, seed, gr = false) {
+          let s = "";
+          const porLinha = Math.ceil(n / linhas), fw = w / porLinha, fh = h / linhas * 1.15;
+          for (let i = 0; i < n; i++) {
+            const l = Math.floor(i / porLinha), c = i % porLinha;
+            const x = c * fw + (l % 2 ? fw * 0.4 : 0) + (rnd(seed + i) - 0.5) * fw * 0.25;
+            const y = l * (h / linhas) * 0.85 + (rnd(seed + i + 50) - 0.5) * 6;
+            const fwi = fw * 0.72, fhi = fh * (0.86 + rnd(seed + i + 90) * 0.14);
+            s += `<g transform="translate(${x.toFixed(1)} ${(y + fh - fhi).toFixed(1)})">${pessoa(fwi, fhi, typeof cor === "function" ? cor(i) : cor, gr ? gravata(fwi, fhi) : "")}</g>`;
+          }
+          return s;
+        }
+        const icones = {
+          bengala: `<path d="M24 58 L24 20 C24 6, 44 6, 44 20" fill="none" stroke="${C.tinta}" stroke-width="7" stroke-linecap="round"/>`,
+          moeda: moeda(60),
+          cruz: `<rect x="22" y="4" width="16" height="52" fill="${C.verm}"/><rect x="4" y="22" width="52" height="16" fill="${C.verm}"/>`,
+          livro: `<path d="M2 12 L30 18 L58 12 L58 52 L30 58 L2 52 Z" fill="${C.azul}"/><path d="M30 18 L30 58" stroke="${C.claro}" stroke-width="3"/>`,
+          capacete: `<path d="M6 40 C6 12, 54 12, 54 40 Z" fill="${C.amar}"/><rect x="0" y="38" width="60" height="9" rx="3" fill="${C.amar2}"/><rect x="27" y="11" width="6" height="28" fill="${C.amar2}"/>`,
+          pa: `<rect x="27" y="4" width="6" height="36" fill="${C.kraft2}"/><path d="M14 38 L46 38 L42 60 L18 60 Z" fill="${C.tinta}"/><rect x="19" y="0" width="22" height="7" rx="3" fill="${C.kraft2}"/>`,
+          sol: `<circle cx="30" cy="30" r="15" fill="${C.amar}"/>${[0, 1, 2, 3, 4, 5, 6, 7].map((i) => `<rect x="28" y="0" width="5" height="10" rx="2" fill="${C.amar}" transform="rotate(${i * 45} 30 30)"/>`).join("")}`,
+          coracao: `<path d="M30 54 C 8 38, 2 26, 8 16 C 14 6, 26 8, 30 18 C 34 8, 46 6, 52 16 C 58 26, 52 38, 30 54 Z" fill="${C.verm}"/>`,
+          check: (cor = C.azul) => `<path d="M8 32 L24 48 L54 12" fill="none" stroke="${cor}" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>`,
+          xis: (cor = C.verm) => `<path d="M10 10 L50 50 M50 10 L10 50" fill="none" stroke="${cor}" stroke-width="10" stroke-linecap="round"/>`,
+          setaBaixo: (cor = C.azul) => `<path d="M30 4 L30 46 M12 30 L30 50 L48 30" fill="none" stroke="${cor}" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>`,
+          setaCima: (cor = C.verm) => `<path d="M30 56 L30 14 M12 30 L30 10 L48 30" fill="none" stroke="${cor}" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>`,
+        };
+        function cartao(w, h, seed, label, icone, fs, faixa = C.tinta, fundo = C.claro) {
+          return `<path d="${pRet(w, h, seed)}" fill="${fundo}"/><rect x="0" y="0" width="${w}" height="14" fill="${faixa}"/>
+            ${ic(18, h / 2 - 22, 0.85, icone)}${fT(w / 2 + 34, h / 2 + fs * 0.4, label, fs, C.tinta)}`;
+        }
+        function tesouraPeq() {
+          return `<circle cx="30" cy="30" r="22" fill="none" stroke="${C.tinta}" stroke-width="10"/><circle cx="30" cy="90" r="22" fill="none" stroke="${C.tinta}" stroke-width="10"/>
+            <path d="M48 42 L170 76 L160 84 Z M48 78 L170 44 L160 36 Z" fill="${C.tinta}"/><circle cx="96" cy="60" r="7" fill="${C.claro}"/>`;
+        }
+        const lamina = (cima) => cima
+          ? `<circle cx="70" cy="92" r="46" fill="none" stroke="${C.tinta}" stroke-width="18"/><path d="M104 118 L176 142" stroke="${C.tinta}" stroke-width="16" stroke-linecap="round"/><path d="M164 136 L456 148 L160 160 Z" fill="${C.tinta}"/><circle cx="170" cy="150" r="11" fill="${C.claro}"/>`
+          : `<circle cx="70" cy="208" r="46" fill="none" stroke="${C.tinta}" stroke-width="18"/><path d="M104 182 L176 158" stroke="${C.tinta}" stroke-width="16" stroke-linecap="round"/><path d="M164 164 L456 152 L160 140 Z" fill="${C.verm2}"/>`;
+        const chama = (s) => `<path d="M40 120 C 6 96, 16 52, 40 0 C 52 38, 82 58, 72 98 C 68 112, 56 120, 40 120 Z" fill="${C.verm}"/>
+          <path d="M40 116 C 24 104, 28 78, 40 52 C 48 74, 60 88, 54 104 C 51 112, 46 116, 40 116 Z" fill="${C.amar}"/>`;
+        function engrenagem(r, n, cor) {
+          const pts = [];
+          for (let k = 0; k < n * 4; k++) {
+            const a = (k / (n * 4)) * Math.PI * 2, rr = (k % 4 === 0 || k % 4 === 3) ? r * 0.8 : r;
+            pts.push([r + Math.cos(a) * rr, r + Math.sin(a) * rr]);
+          }
+          return `<path d="M${pts.map((p) => p[0].toFixed(1) + " " + p[1].toFixed(1)).join(" L")} Z" fill="${cor}"/><circle cx="${r}" cy="${r}" r="${r * 0.28}" fill="${C.claro}"/><circle cx="${r}" cy="${r}" r="${r * 0.12}" fill="${C.tinta}"/>`;
+        }
+        function documento(w, h, seed, t1, t2, faixa = C.tinta) {
+          let s = `<path d="${pRet(w, h, seed)}" fill="${C.claro}"/><rect x="0" y="0" width="${w}" height="70" fill="${faixa}"/>${fT(w / 2, 50, t1, 38, C.claro)}${fT(w / 2, 118, t2, Math.min(30, (w - 40) / (t2.length * 0.68)), C.tinta)}`;
+          for (let i = 0; i < 8; i++) s += `<rect x="30" y="${150 + i * 30}" width="${(w - 60) * (0.6 + rnd(seed + i) * 0.4)}" height="8" rx="4" fill="${C.tinta}" opacity=".18"/>`;
+          return s;
+        }
+        const casinha = (w, h, cor, seed) =>
+          `<path d="M0 ${h * 0.42} L${w / 2} 0 L${w} ${h * 0.42} Z" fill="${C.verm}"/><path d="${pRet(w * 0.84, h * 0.6, seed, 1.5, 20)}" transform="translate(${w * 0.08} ${h * 0.4})" fill="${cor}"/><rect x="${w * 0.42}" y="${h * 0.68}" width="${w * 0.16}" height="${h * 0.32}" fill="${C.tinta}" opacity=".6"/>`;
+        const grafPapel = (w, h, seed) => {
+          let s = `<path d="${pRet(w, h, seed)}" fill="${C.claro}"/><path d="M50 ${h - 50} L${w - 30} ${h - 50} M50 ${h - 50} L50 30" stroke="${C.tinta}" stroke-width="5" fill="none"/>`;
+          for (let i = 1; i < 5; i++) s += `<rect x="52" y="${h - 50 - i * (h - 90) / 5}" width="${w - 84}" height="2" fill="${C.tinta}" opacity=".15"/>`;
+          return s;
+        };
+
+        // ══════════════════════════════════════════════════════════════════════
+        // CÂMERA E CAPÍTULOS
+        // ══════════════════════════════════════════════════════════════════════
+        const VX = 540, VY = 400;   // centro útil da folha (0–768, sem a etiqueta da legenda)
+        const cam = (cx, cy, z) => ({ x: VX - cx * z, y: VY - cy * z, scale: z });
+        let camAtual = cam(360, 450, 1.16);
+        tl.set(mundo, camAtual, 0);
+        function camPara(alvo, t, dur, ease = "power3.inOut") {
+          tl.fromTo(mundo, camAtual, Object.assign({ duration: dur, ease, immediateRender: false }, alvo), t);
+          camAtual = alvo;
+        }
+        function camVia(meio, alvo, t, d1, d2) {
+          tl.fromTo(mundo, camAtual, Object.assign({ duration: d1, ease: "power2.in", immediateRender: false }, meio), t);
+          tl.fromTo(mundo, meio, Object.assign({ duration: d2, ease: "power2.out", immediateRender: false }, alvo), t + d1);
+          camAtual = alvo;
+        }
+        const camS = (i, lx, z = 1, ly = 400) => cam(ST[i].x + lx, ST[i].y + ly, z);
+        // atravessa a mesa até a cena i: recua no meio do caminho e pousa
+        function vai(i, lx, t, z = 1) {
+          const a = camAtual, b = camS(i, lx, z);
+          const ax = (VX - a.x) / a.scale, ay = (VY - a.y) / a.scale, bx = (VX - b.x) / b.scale, by = (VY - b.y) / b.scale;
+          const d = Math.hypot(bx - ax, by - ay);
+          const zm = Math.max(0.06, Math.min(0.5, 1300 / (d + 1300)));
+          const extra = Math.min(0.55, d / 40000);
+          camVia(cam((ax + bx) / 2, (ay + by) / 2, zm), b, t - 0.3 - extra * 0.5, 0.32 + extra, 0.42 + extra);
+        }
+        const hud = $("#hud");
+        function capitulo(num, titulo, t0, t1) {
+          const d = document.createElement("div");
+          d.className = "cap";
+          d.innerHTML = num ? `<span class="cap-n">${num}<small>/11</small></span><span class="cap-t">${titulo}</span>`
+                            : `<span class="cap-t cap-esp">${titulo}</span>`;
+          hud.appendChild(d);
+          tl.set(d, { autoAlpha: 0 }, 0);
+          tl.fromTo(d, { autoAlpha: 1, y: -130, rotation: -9 }, { autoAlpha: 1, y: 0, rotation: -1.5, duration: 0.34, ease: S(0.34, "back.out(2)"), immediateRender: false }, t0 + 0.05);
+          if (t1 < DUR) {
+            tl.to(d, { y: -140, rotation: 5, duration: 0.2, ease: S(0.2, "power2.in") }, t1 - 0.22);
+            tl.set(d, { autoAlpha: 0 }, t1);
+          }
+        }
+        // grão do papel PARADO (Mickael, 10/10/2026). Ele pulava a cada 2 quadros: era ruído novo em todo quadro, e o vídeo
+        // pesava ~3,5× (C45: 250 MB → 72 MB parado, mesma qualidade); no TikTok, esse ruído roubava os bits do desenho e do texto
+
+        // ══════════════════════════════════════════════════════════════════════
+        // CENA 0 · GANCHO — o plano de governo sobre a mesa (volta no fecho)
+        // ══════════════════════════════════════════════════════════════════════
+        const c0 = cena(0, 0, 0);
+        const cong0 = obj(c0, "cong0", 590, 262, 460, 280, congresso());
+        revela(cong0, W("governo", "gancho") - 0.2, 0.55);
+        const moedas0 = [0, 1, 2].map((i) => obj(c0, "m0-" + i, 120 + i * 96, 150 + (i % 2) * 22, 86, 86, moeda(86)));
+        moedas0.forEach((m, i) => aparece(m, W("economia", "gancho") - 0.12 + i * 0.09, 0.42, { y: -320, scale: 1, rotation: -40 }));
+        const pasta0 = obj(c0, "pasta0", 90, 300, 470, 350, `
+          <path d="M0 40 L0 350 L470 350 L470 40 L210 40 L190 0 L20 0 Z" fill="${C.kraft2}"/>`);
+        let folhaIn = `<path d="${pRet(440, 318, 11)}" fill="${C.claro}"/>${fM(28, 48, "PROPOSTAS", 24)}`;
+        for (let i = 0; i < 11; i++) folhaIn += `${fM(28, 82 + i * 21.5, String(i + 1).padStart(2, "0"), 15, C.tinta, "start", 0.7)}<rect x="62" y="${74 + i * 21.5}" width="${190 + rnd(i + 3) * 150}" height="6" rx="3" fill="${C.tinta}" opacity=".18"/>`;
+        const folha0 = obj(c0, "folha0", 105, 326, 440, 318, folhaIn, false);
+        const coresAba = [C.azul, C.verm, C.amar, C.rosa, C.kraft, C.azul, C.verm, C.amar, C.rosa, C.kraft, C.azul];
+        const abas0 = coresAba.map((cor, i) => {
+          const a = obj(c0, "aba0-" + i, 540, 333 + i * 27, 66, 24, `<path d="M0 0 L58 0 Q66 0 66 8 L66 16 Q66 24 58 24 L0 24 Z" fill="${cor}"/>${fM(36, 17, String(i + 1), 14, C.tinta, "middle")}`, false);
+          a.style.zIndex = 1;
+          return a;
+        });
+        const capa0 = obj(c0, "capa0", 90, 318, 470, 332, `
+          <path d="${pRet(470, 332, 5, 2, 50)}" fill="${C.kraft}"/>
+          <rect x="34" y="34" width="402" height="64" fill="${C.tinta}"/>${fT(235, 78, "PLANO DE GOVERNO", 36, C.claro)}
+          <rect x="34" y="236" width="402" height="6" fill="${C.tinta}" opacity=".25"/><rect x="34" y="258" width="300" height="6" fill="${C.tinta}" opacity=".25"/>
+          ${fM(34, 300, "CONFIDENCIAL · 2026", 18, C.tinta, "start", 0.6)}`);
+        capa0.style.transformOrigin = "0% 50%";
+        const selo0 = rotulo(c0, "selo0", 110, 432, 430, "<span>RENAN SANTOS</span>", "selo", "font-size:50px");
+        [pasta0, folha0, capa0].forEach((el) => aparece(el, 0.02, 0.5, { y: 520, scale: 1, rotation: -5 }));
+        carimba(selo0, W("Renan", "gancho") + 0.05, -5, 1.1);
+        const tAbre = W("propostas", "gancho") - 0.05;
+        tl.to(capa0, { scaleX: 0, duration: 0.2, ease: S(0.2, "power2.in") }, tAbre);
+        tl.set([capa0, selo0], { autoAlpha: 0 }, tAbre + 0.2);
+        abas0.forEach((a, i) => aparece(a, tAbre + 0.2 + i * 0.045, 0.2, { x: -60, scale: 1 }));
+        camPara(cam(560, 410, 1.0), 0.2, 5.4, "sine.inOut");
+
+        // ══════════════════════════════════════════════════════════════════════
+        // CENA 1 · A LINHA — queimar capital político por reformas impopulares
+        // ══════════════════════════════════════════════════════════════════════
+        const c1 = cena(1, 1600, 460);
+        const rotCap = rotulo(c1, "rot-cap", 40, 632, 360, "<span>CAPITAL POLÍTICO</span>", "tag tagt", "font-size:26px");
+        const bat = obj(c1, "bat", 120, 170, 200, 450, `
+          <rect x="62" y="8" width="76" height="40" rx="8" fill="${C.tinta}"/>
+          <rect x="6" y="44" width="188" height="400" rx="22" fill="${C.claro}" stroke="${C.tinta}" stroke-width="10"/>`);
+        const nivel = obj(c1, "nivel", 136, 230, 168, 374, `<rect width="168" height="374" rx="10" fill="${C.azul}"/>
+          ${[1, 2, 3].map((k) => `<rect x="0" y="${k * 93.5 - 3}" width="168" height="6" fill="${C.claro}" opacity=".5"/>`).join("")}`, false, false);
+        nivel.style.transformOrigin = "50% 100%";
+        const fosf = obj(c1, "fosf", 330, 40, 50, 230, `<rect x="19" y="40" width="12" height="190" rx="4" fill="${C.kraft2}"/><ellipse cx="25" cy="30" rx="16" ry="22" fill="${C.verm2}"/>`, true, false);
+        fosf.style.transformOrigin = "50% 100%";
+        const chamas1 = [0, 1, 2].map((k) => {
+          const f = obj(c1, "chama1-" + k, 128 + k * 58, 92 + (k === 1 ? -24 : 0), 80, 120, chama(k), false, false);
+          f.style.transformOrigin = "50% 100%";
+          return f;
+        });
+        [rotCap, bat, nivel].forEach((el, k) => aparece(el, B.linha + 0.05 + k * 0.05, 0.4, { y: 260, scale: 1 }));
+        const tQueima = W("queimar", "linha");
+        aparece(fosf, tQueima - 0.55, 0.3, { x: 220, y: -120, rotation: 50, scale: 1 });
+        tl.to(fosf, { rotation: -38, x: -60, duration: 0.22, ease: S(0.22, "power3.in") }, tQueima - 0.2);
+        tl.to(fosf, { autoAlpha: 0, y: -80, duration: 0.25 }, tQueima + 0.5);
+        chamas1.forEach((f, k) => {
+          aparece(f, tQueima + k * 0.07, 0.25, { scale: 0.1, y: 30 });
+          ferve(f.firstChild, 9, 300 + k, tQueima, B.colossal + 0.5, 10);
+          tl.fromTo(f.firstChild, { scaleY: 1 }, { scaleY: 1, duration: B.colossal - tQueima, immediateRender: false,
+            ease: (p) => 0.82 + rnd(700 + k * 31 + Math.floor(p * (B.colossal - tQueima) * 12)) * 0.36 }, tQueima);
+        });
+        const tImp = W("impopulares", "linha");
+        tl.fromTo(nivel, { scaleY: 1 }, { scaleY: 0.18, duration: tImp - tQueima, ease: S(tImp - tQueima, "none"), immediateRender: false }, tQueima + 0.1);
+        tl.to(nivel.querySelector("rect"), { attr: { fill: C.verm }, duration: 0.01 }, W("aprovar", "linha"));
+        const ban1 = rotulo(c1, "ban1", 420, 132, 640, "<span>MEDIDAS IMPOPULARES</span>", "tag tagv", "font-size:40px");
+        aparece(ban1, W("medidas", "linha") - 0.05, 0.3, { scale: 0.3, y: -30 });
+        ["PREVIDÊNCIA", "ADMINISTRATIVA", "TRABALHISTA"].forEach((txt, k) => {
+          const card = obj(c1, "ref1-" + k, 450, 232 + k * 128, 570, 108, `
+            <path d="${pRet(570, 108, 40 + k)}" fill="${C.claro}"/>${fM(30, 38, "REFORMA", 20, C.tinta, "start", 0.6)}${fT(30, 86, txt, 42, C.tinta, "start")}
+            <circle cx="515" cy="54" r="34" fill="${C.verm}"/>${ic(485, 24, 1, icones.setaBaixo(C.claro))}`);
+          aparece(card, W(["previdenciária", "administrativa", "trabalhista"][k], "linha") - 0.08, 0.26, { scale: 1.5, rotation: k % 2 ? 7 : -7, y: -30 });
+        });
+
+        // ══════════════════════════════════════════════════════════════════════
+        // CENA 2 · CORTE DE GASTOS — tesoura colossal, 200 bi/ano, 3 tri em 10 anos, 25% do PIB
+        // ══════════════════════════════════════════════════════════════════════
+        const c2 = cena(2, 3200, 0);
+        const tira = (w, seed) => `<path d="${pRet(w, 86, seed, 2, 30)}" fill="${C.kraft2}"/>${[0, 1, 2].map((i) => fM(30 + i * 260, 54, "GASTO PÚBLICO", 26, C.claro)).join("")}`;
+        const tiraL = obj(c2, "tiraL", -40, 330, 600, 86, tira(600, 21), true);
+        const tiraR = obj(c2, "tiraR", 560, 330, 560, 86, tira(560, 22), true);
+        revela(tiraL, B.colossal + 0.05, 0.4, "inset(0% 100% 0% 0%)");
+        revela(tiraR, B.colossal + 0.3, 0.35, "inset(0% 100% 0% 0%)");
+        const lamA = obj(c2, "lamA", 110, 223, 460, 300, lamina(true), true, false);
+        const lamB = obj(c2, "lamB", 110, 223, 460, 300, lamina(false), true, false);
+        [lamA, lamB].forEach((l, k) => {
+          tl.set(l.firstChild, { transformOrigin: "170px 150px", rotation: k ? 16 : -16 }, 0);
+          aparece(l, W("reforma", "colossal") - 0.2, 0.4, { x: -560, scale: 1 });
+        });
+        const corta = (t) => {
+          tl.to(lamA.firstChild, { rotation: 0, duration: 0.08, ease: "power4.in" }, t);
+          tl.to(lamB.firstChild, { rotation: 0, duration: 0.08, ease: "power4.in" }, t);
+          tl.to(lamA.firstChild, { rotation: -16, duration: 0.16, ease: S(0.16) }, t + 0.25);
+          tl.to(lamB.firstChild, { rotation: 16, duration: 0.16, ease: S(0.16) }, t + 0.25);
+        };
+        const rf2 = rotulo(c2, "rf2", 560, 112, 440, "<span>REFORMA FISCAL</span>", "tag tagt", "font-size:34px");
+        aparece(rf2, W("fiscal", "colossal") - 0.05, 0.28, { scale: 0.3, y: 20 });
+        const seloCol = rotulo(c2, "selo-col", 470, 172, 580, "<span>COLOSSAL</span>", "selo", "font-size:84px");
+        const tCol = W("colossal", "colossal");
+        carimba(seloCol, tCol + 0.06, -5, 1.2);
+        corta(tCol + 0.02);
+        cai(tiraR, tCol + 0.1, 40, 520, 26, 0.7);
+        tl.to([seloCol, rf2], { y: -60, scale: 0.55, autoAlpha: 0, duration: 0.3, ease: S(0.3, "power2.in") }, B["200bi"] - 0.1);
+        const desp = `<path d="${pRet(380, 300, 31)}" fill="${C.claro}"/>${fT(190, 52, "DESPESAS", 34)}${fM(190, 80, "GOVERNO FEDERAL", 18, C.tinta, "middle", 0.6)}
+          ${[0, 1, 2, 3, 4, 5].map((i) => `<rect x="30" y="${108 + i * 30}" width="${160 + rnd(i + 30) * 80}" height="7" rx="3" fill="${C.tinta}" opacity=".2"/><rect x="290" y="${108 + i * 30}" width="60" height="7" rx="3" fill="${C.tinta}" opacity=".2"/>`).join("")}`;
+        let despBaixo = `M0 0 L380 0 L380 130`;
+        for (let i = 19; i >= 0; i--) despBaixo += ` L${i * 20} ${i % 2 ? 130 : 142}`;
+        const despT = obj(c2, "despT", 600, 170, 380, 300, desp);
+        const despB = obj(c2, "despB", 600, 470, 380, 142, `<path d="${despBaixo} Z" fill="${C.claro}"/>${[0, 1, 2].map((i) => `<rect x="30" y="${18 + i * 30}" width="${200 + rnd(i + 60) * 60}" height="7" rx="3" fill="${C.tinta}" opacity=".2"/>`).join("")}`);
+        [despT, despB].forEach((el) => aparece(el, B["200bi"] + 0.05, 0.4, { y: -480, scale: 1, rotation: 6 }));
+        const s200 = rotulo(c2, "s200", 560, 250, 460, "<span>−R$ 200 BI</span>", "selo", "font-size:68px");
+        carimba(s200, W("200", "200bi") + 0.1, -7);
+        const pano = rotulo(c2, "pano", 640, 372, 300, "<span>POR ANO</span>", "tag tagt", "font-size:34px");
+        aparece(pano, W("ano", "200bi") - 0.05, 0.25, { scale: 0.3, y: 10 });
+        const tDesp = W("despesa", "200bi");
+        tl.to([lamA, lamB], { x: 440, y: 97, duration: 0.35, ease: S(0.35, "power2.inOut") }, tDesp - 0.5);
+        corta(tDesp - 0.08);
+        cai(despB, tDesp, -30, 480, -16, 0.7);
+        tl.to([lamA, lamB], { x: 1000, y: 160, autoAlpha: 0, duration: 0.4, ease: S(0.4, "power2.in") }, tDesp + 0.45);
+        // 3 trilhões em 10 anos: maços empilhando ano a ano
+        some([despT, s200, pano], B["3tri"] - 0.15, 0.3, { y: -80, scale: 0.7 });
+        const tEco = W("economizar", "3tri");
+        for (let i = 0; i < 10; i++) {
+          for (let j = 0; j <= i; j++) {
+            const m = obj(c2, `maco${i}-${j}`, 1160 + i * 60, 612 - j * 24, 54, 22, notaMaco(54, 22), j === 0, false);
+            aparece(m, tEco + i * 0.24 + j * 0.03, 0.16, { y: -70, scale: 1 });
+          }
+        }
+        const eixo2 = rotulo(c2, "eixo2", 1150, 642, 620, "ANO 1&nbsp;&nbsp;·&nbsp;&nbsp;·&nbsp;&nbsp;·&nbsp;&nbsp;·&nbsp;&nbsp;·&nbsp;&nbsp;·&nbsp;&nbsp;·&nbsp;&nbsp;ANO 10", "mono", "font-size:20px;text-align:center");
+        aparece(eixo2, tEco, 0.3, { y: 20, scale: 1 });
+        const s3 = rotulo(c2, "s3", 1240, 236, 480, "<span>R$ 3 TRI</span>", "selo", "font-size:92px");
+        carimba(s3, W("trilhões", "3tri") + 0.08, -6, 1.1);
+        const t10 = rotulo(c2, "t10", 1170, 150, 360, "<span>EM 10 ANOS</span>", "tag tagt", "font-size:32px");
+        aparece(t10, W("anos", "3tri") - 0.1, 0.25, { scale: 0.3, y: 10 });
+        const tPib = W("economizar", "3tri", 2);
+        const pib = obj(c2, "pib", 1830, 250, 360, 360, `<circle cx="180" cy="180" r="172" fill="${C.kraft2}"/><circle cx="180" cy="180" r="150" fill="${C.kraft}"/>${fT(120, 250, "PIB", 54, C.tinta)}`);
+        const fatia = obj(c2, "fatia", 1830, 250, 360, 360, `<path d="M180 180 L180 8 A172 172 0 0 1 352 180 Z" fill="${C.verm}"/>${fT(262, 118, "25%", 40, C.claro)}`, true, false);
+        aparece(pib, tPib - 0.1, 0.4, { scale: 0.2, y: 0, rotation: -90 });
+        aparece(fatia, tPib - 0.1, 0.4, { scale: 0.2, y: 0, rotation: -90 });
+        tl.to(fatia, { x: 46, y: -46, duration: 0.3, ease: S(0.3, "back.out(2)") }, W("25", "3tri") - 0.05);
+        const lpib = rotulo(c2, "lpib", 1830, 196, 360, "PIB DO BRASIL", "mono", "font-size:26px;text-align:center");
+        aparece(lpib, tPib, 0.3, { y: 20, scale: 1 });
+        const s25 = rotulo(c2, "s25", 1790, 560, 440, "<span>25% DO PIB</span>", "selo", "font-size:62px");
+        carimba(s25, W("PIB", "3tri") + 0.05, -4);
+
+        // ══════════════════════════════════════════════════════════════════════
+        // CENA 3 · DESIGUALDADE — lá fora o Estado reduz, no Brasil aumenta
+        // ══════════════════════════════════════════════════════════════════════
+        const c3 = cena(3, 6020, 460);
+        const globoMini = `<svg width="38" height="38" viewBox="0 0 38 38" style="vertical-align:-8px;margin-right:10px"><circle cx="19" cy="19" r="18" fill="${C.azul}"/><path d="${pBolha(14, 14, 8, 6, 3, 0.2, 10)}" fill="${C.claro}"/><path d="${pBolha(25, 25, 7, 6, 4, 0.2, 10)}" fill="${C.claro}"/></svg>`;
+        const brasilPts = [[150, 10], [185, 25], [215, 20], [240, 45], [280, 70], [295, 105], [285, 130], [270, 150], [262, 185], [240, 215], [222, 240], [195, 250], [180, 275], [160, 295], [150, 280], [162, 255], [140, 240], [125, 215], [110, 195], [80, 190], [70, 165], [45, 160], [25, 140], [10, 115], [25, 95], [50, 85], [65, 60], [95, 55], [110, 35], [130, 30]];
+        const brasilPath = "M" + brasilPts.map((p) => p.join(" ")).join(" L") + " Z";
+        const brasilMini = `<svg width="40" height="40" viewBox="0 0 300 300" style="vertical-align:-9px;margin-right:10px"><path d="${brasilPath}" fill="${C.kraft2}" stroke="${C.tinta}" stroke-width="14"/></svg>`;
+        const hdrL = rotulo(c3, "hdrL", 70, 150, 440, `<span>${globoMini}OUTROS PAÍSES</span>`, "tag", "font-size:30px");
+        const hdrR = rotulo(c3, "hdrR", 570, 150, 440, `<span>${brasilMini}BRASIL</span>`, "tag", "font-size:30px");
+        const estado3 = obj(c3, "estado3", 478, 122, 124, 124, `
+          <path d="M62 0 L124 32 L0 32 Z" fill="${C.tinta}"/><rect x="6" y="36" width="112" height="10" fill="${C.kraft2}"/>
+          ${[0, 1, 2, 3].map((i) => `<rect class="col3" x="${14 + i * 26}" y="50" width="16" height="50" fill="${C.kraft}"/>`).join("")}
+          <rect x="0" y="100" width="124" height="12" fill="${C.kraft2}"/>${fT(62, 26, "ESTADO", 13, C.claro)}`);
+        function dialSVG() {
+          const cx = 200, cy = 185, R = 150, r = 106;
+          const pt = (v, rr) => { const a = Math.PI * (1 - (v - 30) / 30); return [cx + Math.cos(a) * rr, cy - Math.sin(a) * rr]; };
+          const arco = (v0, v1, cor, op = 1) => {
+            const [x0, y0] = pt(v0, R), [x1, y1] = pt(v1, R), [x2, y2] = pt(v1, r), [x3, y3] = pt(v0, r);
+            return `<path d="M${x0} ${y0} A${R} ${R} 0 0 1 ${x1} ${y1} L${x2} ${y2} A${r} ${r} 0 0 0 ${x3} ${y3} Z" fill="${cor}" opacity="${op}"/>`;
+          };
+          let s = arco(30, 40, C.azul, 0.85) + arco(40, 50, C.kraft2) + arco(50, 60, C.verm, 0.9);
+          for (let v = 30; v <= 60; v += 5) {
+            const [a1, b1] = pt(v, r - 4), [a2, b2] = pt(v, r - (v % 10 ? 14 : 24));
+            s += `<line x1="${a1}" y1="${b1}" x2="${a2}" y2="${b2}" stroke="${C.tinta}" stroke-width="${v % 10 ? 3 : 6}"/>`;
+            if (v % 10 === 0) { const [lx, ly] = pt(v, R + 20); s += fM(lx, ly + 8, String(v), 22, C.tinta, "middle"); }
+          }
+          return s + `<rect x="${cx - 170}" y="${cy + 2}" width="340" height="10" rx="5" fill="${C.kraft2}"/>`;
+        }
+        const agulha = `<rect x="4" y="7" width="150" height="8" rx="4" fill="${C.tinta}"/><circle cx="150" cy="11" r="12" fill="${C.tinta}"/><circle cx="150" cy="11" r="4" fill="${C.claro}"/>`;
+        const P3 = [[290, 420], [790, 420]];
+        const dials = P3.map(([px, py], k) => obj(c3, "dial" + k, px - 200, py - 185, 400, 200, dialSVG()));
+        const agulhas = P3.map(([px, py], k) => {
+          const a = obj(c3, "ag" + k, px - 150, py - 11, 166, 24, agulha, false, false);
+          a.style.transformOrigin = "150px 11px";
+          tl.set(a, { autoAlpha: 0, rotation: 0 }, 0);
+          return a;
+        });
+        const ang = (v) => ((v - 30) / 30) * 180;
+        const agulhaPara = (k, v, t, dur = 0.45) =>
+          tl.to(agulhas[k], { rotation: ang(v), duration: dur, ease: S(dur, "back.out(1.6)") }, t);
+        // lá fora
+        aparece(hdrL, W("países", "gini45") - 0.1, 0.3, { scale: 0.3, y: 20 });
+        aparece(dials[0], W("planeta", "gini45") - 0.2, 0.4, { y: 200, scale: 1 });
+        tl.set(agulhas[0], { autoAlpha: 1 }, W("planeta", "gini45") + 0.1);
+        agulhaPara(0, 45, W("45", "gini45") - 0.25, 0.4);
+        const n45 = rotulo(c3, "n45", 150, 440, 150, "45", "num", "font-size:80px");
+        aparece(n45, W("45", "gini45") - 0.05, 0.25, { scale: 0.3, y: 10 });
+        aparece(estado3, W("Estado", "gini45") - 0.1, 0.35, { y: -200, scale: 1 });
+        const moedasEst = [];
+        for (let k = 0; k < 6; k++) moedasEst.push(obj(c3, "me3-" + k, 518, 214, 44, 44, moeda(44), false, false));
+        moedasEst.forEach((m, k) => {
+          const lado = k < 3 ? -1 : 1, t = k < 3 ? W("cobrando", "gini45") + k * 0.14 : W("intervém", "brasil55") + (k - 3) * 0.14;
+          tl.set(m, { autoAlpha: 0 }, 0);
+          tl.fromTo(m, { autoAlpha: 1, x: 0, y: 0 }, { x: lado * 230, y: 110, duration: 0.42, ease: S(0.42, "power1.in"), immediateRender: false }, t);
+          tl.to(m, { autoAlpha: 0, duration: 0.05 }, t + 0.42);
+        });
+        agulhaPara(0, 40, W("cair", "gini40") - 0.05, 0.5);
+        const risca45 = obj(c3, "risca45", 150, 470, 150, 30, `<path id="risca45-p" d="M8 18 L142 10" stroke="${C.verm}" stroke-width="10" stroke-linecap="round" fill="none"/>`, false, false);
+        desenha("#risca45-p", W("40", "gini40") - 0.1, 0.2, 140);
+        const n40 = rotulo(c3, "n40", 290, 440, 150, "40", "num", `font-size:80px;color:${C.azul}`);
+        aparece(n40, W("40", "gini40") - 0.02, 0.25, { scale: 0.3, y: 10 });
+        const sIg = rotulo(c3, "sIg", 70, 532, 440, "<span>DESIGUALDADE CAI</span>", "selo seloa", "font-size:38px");
+        carimba(sIg, W("promotor", "gini40") + 0.05, -3, 0.9);
+        // Brasil
+        aparece(hdrR, W("Brasil", "brasil55") - 0.1, 0.3, { scale: 0.3, y: 20 });
+        aparece(dials[1], W("Brasil", "brasil55", 2) - 0.2, 0.4, { y: 200, scale: 1 });
+        tl.set(agulhas[1], { autoAlpha: 1 }, W("Brasil", "brasil55", 2) + 0.1);
+        agulhaPara(1, 53, W("53", "brasil55") - 0.3, 0.45);
+        const n53 = rotulo(c3, "n53", 650, 440, 150, "53", "num", "font-size:80px");
+        aparece(n53, W("53", "brasil55") - 0.02, 0.25, { scale: 0.3, y: 10 });
+        const interr53 = rotulo(c3, "interr53", 640, 410, 60, "?", "interro", "font-size:56px");
+        aparece(interr53, W("lembro", "brasil55"), 0.25, { scale: 2, y: 0, rotation: 20 });
+        tl.to(interr53, { autoAlpha: 0, duration: 0.1 }, W("55", "brasil55") - 0.1);
+        agulhaPara(1, 55, W("55", "brasil55") - 0.2, 0.5);
+        const risca53 = obj(c3, "risca53", 650, 470, 150, 30, `<path id="risca53-p" d="M8 18 L142 10" stroke="${C.tinta}" stroke-width="10" stroke-linecap="round" fill="none"/>`, false, false);
+        desenha("#risca53-p", W("55", "brasil55") - 0.1, 0.2, 140);
+        const n55 = rotulo(c3, "n55", 790, 440, 150, "55", "num", `font-size:80px;color:${C.verm}`);
+        aparece(n55, W("55", "brasil55") - 0.02, 0.25, { scale: 0.3, y: 10 });
+        const sSobe = rotulo(c3, "sSobe", 570, 532, 440, "<span>DESIGUALDADE SOBE</span>", "selo", "font-size:38px");
+        carimba(sSobe, W("55", "brasil55") + 0.5, 3, 0.9);
+        const tSS = rotulo(c3, "tSS", 560, 600, 250, "<span>SUPERSALÁRIO</span>", "tag tagv", "font-size:26px");
+        const tDep = rotulo(c3, "tDep", 820, 600, 220, "<span>DEPUTADO</span>", "tag tagv", "font-size:26px");
+        aparece(tSS, W("super", "brasil55") - 0.05, 0.25, { scale: 1.6, rotation: -8, y: -20 });
+        aparece(tDep, W("deputado", "brasil55") - 0.05, 0.25, { scale: 1.6, rotation: 8, y: -20 });
+        const tProm = W("promotor", "brasil55");
+        const sProm = rotulo(c3, "sProm", 60, 230, 960, "<span style='background:rgba(248,242,228,.92)'>PROMOTOR DE<br>DESIGUALDADE</span>", "selo", "font-size:86px;line-height:.98");
+        carimba(sProm, tProm + 0.08, -5, 1.3);
+        treme(tProm + 0.1, 22, 0.45, 333);
+        const tEst = W("brasileiro", "brasil55");
+        tl.to(estado3.querySelectorAll("path, .col3"), { attr: { fill: C.verm }, duration: 0.01, stagger: 0.04 }, tEst);
+        treme(W("desigualdade", "brasil55"), 14, 0.3, 344);
+
+        // ══════════════════════════════════════════════════════════════════════
+        // CENA 4 · PREVIDÊNCIA — o balão do mínimo sobe sozinho
+        // ══════════════════════════════════════════════════════════════════════
+        const c4 = cena(4, 7620, 0);
+        const balao = (w, h, cor, l1, l2) => `<path d="M${w / 2} ${h * 0.85} L${w / 2 - 13} ${h * 0.93} L${w / 2 + 13} ${h * 0.93} Z" fill="${cor}"/>
+          <ellipse cx="${w / 2}" cy="${h * 0.43}" rx="${w * 0.47}" ry="${h * 0.43}" fill="${cor}"/>
+          <ellipse cx="${w * 0.3}" cy="${h * 0.24}" rx="${w * 0.08}" ry="${h * 0.12}" fill="${C.claro}" opacity=".35" transform="rotate(-25 ${w * 0.3} ${h * 0.24})"/>
+          ${fT(w / 2, h * 0.42, l1, w * 0.13, C.claro)}${fT(w / 2, h * 0.42 + w * 0.15, l2, w * 0.13, C.claro)}`;
+        const bal4 = obj(c4, "bal4", 330, 90, 260, 300, balao(260, 300, C.verm, "SALÁRIO", "MÍNIMO"));
+        const apo4 = obj(c4, "apo4", 140, 480, 330, 130, cartao(330, 130, 41, "APOSENTADORIA", icones.bengala, 24));
+        const bpc4 = obj(c4, "bpc4", 500, 480, 230, 130, cartao(230, 130, 42, "BPC", icones.moeda, 44));
+        const fioA = obj(c4, "fioA", 300, 368, 165, 114, `<path d="M160 2 L5 112" stroke="${C.tinta}" stroke-width="4" fill="none"/>`, false, false);
+        const fioB = obj(c4, "fioB", 455, 368, 165, 114, `<path d="M5 2 L160 112" stroke="${C.tinta}" stroke-width="4" fill="none"/>`, false, false);
+        fioA.style.transformOrigin = "100% 0%"; fioB.style.transformOrigin = "0% 0%";
+        aparece(bal4, B.aposent + 0.02, 0.45, { y: 340, scale: 0.6 });
+        aparece(apo4, W("aposentadorias", "aposent") - 0.12, 0.3, { y: 160, scale: 1, rotation: -6 });
+        aparece(bpc4, W("BPC", "aposent") - 0.12, 0.3, { y: 160, scale: 1, rotation: 6 });
+        revela(fioA, W("aposentadorias", "aposent") + 0.15, 0.25, "inset(0% 0% 100% 0%)");
+        revela(fioB, W("BPC", "aposent") + 0.15, 0.25, "inset(0% 0% 100% 0%)");
+        const des4 = rotulo(c4, "des4", 640, 140, 380, "<span>DESINDEXAR</span>", "tag tagt", "font-size:40px");
+        aparece(des4, W("desindexar", "aposent") - 0.05, 0.28, { scale: 0.3, y: 20 });
+        const des4b = rotulo(c4, "des4b", 620, 204, 420, "SOLTAR DO SALÁRIO MÍNIMO", "mono", "font-size:24px;text-align:center");
+        aparece(des4b, W("mínimo", "aposent") - 0.1, 0.3, { y: 16, scale: 1 });
+        const tes4 = obj(c4, "tes4", 370, 360, 180, 120, tesouraPeq(), true, false);
+        const tCorte4 = W("mínimo", "aposent") + 0.5;
+        aparece(tes4, tCorte4 - 0.45, 0.3, { x: 360, scale: 1, rotation: 20 });
+        tl.to(tes4, { scaleY: 0.55, duration: 0.06 }, tCorte4);
+        tl.to(tes4, { scaleY: 1, duration: 0.1 }, tCorte4 + 0.1);
+        tl.to([fioA, fioB], { scaleY: 0, duration: 0.25, ease: S(0.25, "power2.out") }, tCorte4 + 0.04);
+        some(tes4, tCorte4 + 0.4, 0.3, { x: 300, y: -60 });
+        const tSobe = W("reajuste", "aposent") - 0.1;
+        tl.to(bal4, { y: -260, duration: 2.2, ease: S(2.2, "power1.in") }, tSobe);
+        const rj4 = rotulo(c4, "rj4", 640, 290, 360, "<span>+ REAJUSTE</span>", "tag taga", "font-size:38px");
+        aparece(rj4, tSobe + 0.05, 0.28, { scale: 0.3, y: 30 });
+        tl.fromTo([apo4, bpc4], { rotation: 0 }, { rotation: 1, duration: 0.6, immediateRender: false, ease: (p) => Math.sin(Math.floor(p * 8) * 1.7) * (1 - p) * 5 }, W("aposentadoria", "aposent") - 0.05);
+        const sr4 = rotulo(c4, "sr4", 130, 494, 620, "<span>SEM REAJUSTE</span>", "selo", "font-size:68px");
+        carimba(sr4, W("reajustada", "aposent") + 0.05, -4, 1.1);
+        // pisos de saúde e educação
+        some([des4, des4b, rj4, sr4, apo4, bpc4], B.pisos - 0.25, 0.3, { y: 80, scale: 0.7 });
+        const lajeL = obj(c4, "lajeL", 1120, 470, 290, 56, `<path d="${pRet(290, 56, 51)}" fill="${C.kraft2}"/>${fT(150, 39, "PISO", 28, C.claro)}`);
+        const lajeR = obj(c4, "lajeR", 1410, 470, 290, 56, `<path d="${pRet(290, 56, 52)}" fill="${C.kraft2}"/>${fT(140, 39, "GARANTIDO", 28, C.claro)}`);
+        lajeL.style.transformOrigin = "0% 50%"; lajeR.style.transformOrigin = "100% 50%";
+        const sau4 = obj(c4, "sau4", 1150, 330, 250, 140, cartao(250, 140, 53, "SAÚDE", icones.cruz, 36, C.verm));
+        const edu4 = obj(c4, "edu4", 1430, 330, 260, 140, cartao(260, 140, 54, "EDUCAÇÃO", icones.livro, 25, C.azul));
+        [lajeL, lajeR].forEach((el) => aparece(el, B.pisos + 0.02, 0.35, { y: 200, scale: 1 }));
+        aparece(sau4, W("saúde", "pisos") - 0.15, 0.3, { y: -300, scale: 1 });
+        aparece(edu4, W("educação", "pisos") - 0.15, 0.3, { y: -300, scale: 1 });
+        const tPiso = W("educação", "pisos") + 0.55;
+        tl.to(lajeL, { rotation: 32, y: 240, autoAlpha: 0, duration: 0.6, ease: S(0.6, "power2.in") }, tPiso);
+        tl.to(lajeR, { rotation: -32, y: 240, autoAlpha: 0, duration: 0.6, ease: S(0.6, "power2.in") }, tPiso);
+        tl.to([sau4, edu4], { y: 150, duration: 0.4, ease: S(0.4, "bounce.out") }, tPiso + 0.05);
+        treme(tPiso + 0.4, 10, 0.25, 444);
+        const prof4 = obj(c4, "prof4", 1510, 302, 90, 178, pessoa(90, 178, C.azul, `<rect x="56" y="80" width="36" height="46" fill="${C.claro}" stroke="${C.tinta}" stroke-width="3"/>`));
+        const enf4 = obj(c4, "enf4", 1230, 302, 90, 178, pessoa(90, 178, C.claro, `<rect x="37" y="0" width="16" height="10" fill="${C.verm}"/><rect x="40" y="-4" width="10" height="18" fill="${C.verm}"/>`));
+        [prof4, enf4].forEach((el) => (el.style.transformOrigin = "50% 100%"));
+        aparece(prof4, W("professores", "profs") - 0.05, 0.3, { scaleX: 1, scaleY: 0.1, y: 0 });
+        aparece(enf4, W("saúde", "profs") - 0.1, 0.3, { scaleX: 1, scaleY: 0.1, y: 0 });
+        const sr4b = rotulo(c4, "sr4b", 1110, 360, 620, "<span>SEM REAJUSTE</span>", "selo", "font-size:66px");
+        carimba(sr4b, W("reajustes", "profs") + 0.05, 5, 1.1);
+
+        // ══════════════════════════════════════════════════════════════════════
+        // CENA 5 · BOLSA FAMÍLIA — o cartão vira frente de trabalho e rasga
+        // ══════════════════════════════════════════════════════════════════════
+        const c5 = cena(5, 9890, 460);
+        const bf5 = obj(c5, "bf5", 110, 220, 400, 250, `
+          <path d="${pRet(400, 250, 71)}" fill="${C.claro}"/><rect x="0" y="0" width="400" height="64" fill="${C.azul}"/>${fT(200, 45, "BOLSA FAMÍLIA", 34, C.claro)}
+          <rect x="30" y="92" width="64" height="48" rx="8" fill="${C.amar}"/><path d="M30 116 L94 116 M62 92 L62 140" stroke="${C.amar2}" stroke-width="3"/>
+          ${fM(30, 196, "BENEFÍCIO SOCIAL", 24)}${fM(30, 228, "0000 0000 0000 0000", 20, C.tinta, "start", 0.5)}`);
+        const jag = []; for (let i = 0; i <= 12; i++) jag.push([(rnd(800 + i) - 0.5) * 24, i * (250 / 12)]);
+        const vLpath = "M0 0 " + jag.map(([dx, y]) => `L${(200 + dx).toFixed(1)} ${y.toFixed(1)}`).join(" ") + " L0 250 Z";
+        const vRpath = "M200 0 L200 250 " + jag.slice().reverse().map(([dx, y]) => `L${dx.toFixed(1)} ${y.toFixed(1)}`).join(" ") + " Z";
+        const vL5 = obj(c5, "vL5", 110, 220, 200, 250, `<path d="${vLpath}" fill="${C.kraft}"/>${ic(40, 100, 1.7, icones.capacete)}${fT(104, 62, "FRENTE DE", 30)}`);
+        const vR5 = obj(c5, "vR5", 310, 220, 200, 250, `<path d="${vRpath}" fill="${C.kraft}"/>${ic(60, 96, 1.6, icones.pa)}${fT(96, 62, "TRABALHO", 30)}`);
+        vL5.style.transformOrigin = "100% 50%"; vR5.style.transformOrigin = "0% 50%";
+        aparece(bf5, B.bolsa + 0.02, 0.45, { y: -360, scale: 1, rotation: -12 });
+        const anti5 = rotulo(c5, "anti5", 330, 196, 220, "<span>ANTI</span>", "selo", "font-size:56px");
+        carimba(anti5, W("anti", "bolsa") + 0.05, 12);
+        const tVira = W("substituindo", "bolsa");
+        tl.to(bf5, { scaleX: 0, duration: 0.14, ease: S(0.14, "power2.in") }, tVira);
+        tl.set([bf5, anti5], { autoAlpha: 0 }, tVira + 0.14);
+        [vL5, vR5].forEach((el) => {
+          tl.set(el, { autoAlpha: 0 }, 0);
+          tl.fromTo(el, { autoAlpha: 1, scaleX: 0 }, { scaleX: 1, duration: 0.16, ease: S(0.16, "power2.out"), immediateRender: false }, tVira + 0.14);
+        });
+        const obr5 = rotulo(c5, "obr5", 140, 400, 440, "<span>OBRIGATÓRIO</span>", "selo", "font-size:50px");
+        carimba(obr5, W("obrigatórias", "bolsa") + 0.05, -5);
+        const rec5 = obj(c5, "rec5", 600, 300, 110, 220, pessoa(110, 220, C.kraft2), true, false);
+        aparece(rec5, W("recusassem", "recusa") - 0.15, 0.3, { y: 120, scale: 1 });
+        tl.fromTo(rec5.firstChild, { rotation: 0 }, { rotation: 1, duration: 0.9, immediateRender: false, ease: (p) => Math.sin(Math.floor(p * 11) * 2.2) * 9 * (1 - p) }, W("recusassem", "recusa") + 0.2);
+        const nao5 = rotulo(c5, "nao5", 660, 240, 160, "<span>NÃO</span>", "tag tagv", "font-size:40px");
+        aparece(nao5, W("trabalho", "recusa") - 0.1, 0.22, { scale: 0.2, y: 20 });
+        const tRasga = W("perderiam", "recusa");
+        tl.to(vL5, { x: -80, y: 60, rotation: -16, duration: 0.35, ease: S(0.35, "power2.out") }, tRasga);
+        tl.to([vR5, obr5], { x: 80, y: 80, rotation: 14, duration: 0.35, ease: S(0.35, "power2.out") }, tRasga);
+        treme(tRasga + 0.05, 9, 0.22, 555);
+        some([rec5, nao5, vL5, vR5, obr5], B.otario - 0.1, 0.3, { y: 120, scale: 0.8 });
+        const trab5 = obj(c5, "trab5", 650, 330, 140, 290, pessoa(140, 290, C.azul, `<rect x="98" y="196" width="46" height="34" rx="6" fill="${C.kraft2}"/>`));
+        trab5.style.transformOrigin = "50% 100%";
+        aparece(trab5, W("brasileiro", "otario") - 0.1, 0.3, { y: 200, scale: 1 });
+        const peso5 = obj(c5, "peso5", 585, 150, 270, 176, `<path d="${pRet(270, 176, 81)}" fill="${C.tinta}"/>${fT(135, 102, "IMPOSTOS", 40, C.claro)}<rect x="20" y="132" width="230" height="8" fill="${C.claro}" opacity=".25"/>`);
+        peso5.style.transformOrigin = "50% 100%";
+        const tPeso = W("trabalha", "otario");
+        tl.set(peso5, { autoAlpha: 0 }, 0);
+        tl.fromTo(peso5, { autoAlpha: 1, y: -520 }, { y: 0, duration: 0.3, ease: S(0.3, "power3.in"), immediateRender: false }, tPeso - 0.3);
+        tl.fromTo(trab5, { scaleY: 1 }, { scaleY: 0.9, duration: 0.12, ease: S(0.12), immediateRender: false }, tPeso);
+        treme(tPeso, 12, 0.25, 556);
+        const ot5 = rotulo(c5, "ot5", 820, 380, 300, '<span>"OTÁRIO"</span>', "selo", "font-size:54px");
+        carimba(ot5, W("otário", "otario") + 0.05, 8);
+        const tPaga = W("pagando", "otario");
+        tl.to(peso5, { scale: 1.32, duration: 0.5, ease: S(0.5, "back.out(1.5)") }, tPaga - 0.1);
+        tl.to(trab5, { scaleY: 0.8, duration: 0.5, ease: S(0.5) }, tPaga - 0.1);
+        for (let k = 0; k < 5; k++) {
+          const m = obj(c5, "mp5-" + k, 700, 520, 46, 46, moeda(46), false, false);
+          tl.set(m, { autoAlpha: 0 }, 0);
+          tl.fromTo(m, { autoAlpha: 1, x: 0, y: 0 }, { x: -120 - k * 70, y: 110 + rnd(k + 9) * 20, rotation: 200, duration: 0.5, ease: S(0.5, "power1.in"), immediateRender: false }, tPaga + k * 0.1);
+        }
+
+        // ══════════════════════════════════════════════════════════════════════
+        // CENA 6 · IMPOSTOS — a escada que o mercado gosta
+        // ══════════════════════════════════════════════════════════════════════
+        const c6 = cena(6, 11510, 0);
+        const rotDeg = ["DÍVIDA", "SELIC", "IMPOSTOS", "INVESTIR"];
+        const verbo = ["ESTABILIZAR", "BAIXAR", "REDUZIR", ""];
+        const degraus = rotDeg.map((txt, i) => {
+          const x = 70 + i * 240, top = 560 - i * 95, h = 650 - top;
+          return obj(c6, "deg" + i, x, top, 220, h, `<path d="${pRet(220, h, 60 + i)}" fill="${C.kraft}"/><rect x="0" y="0" width="220" height="12" fill="${C.kraft2}"/>
+            <circle cx="30" cy="36" r="19" fill="${C.verm}"/>${fT(30, 45, String(i + 1), 24, C.claro)}
+            ${fM(120, Math.min(h - 18, 104) - 34, verbo[i], 17, C.tinta, "middle", 0.65)}${fT(120, Math.min(h - 18, 104), txt, txt.length > 6 ? 28 : 32)}`);
+        });
+        degraus.forEach((d, i) => aparece(d, W("lógica", "impostos") + i * 0.12, 0.3, { y: 160, scale: 1 }));
+        const icDeg = [
+          `<rect x="20" y="40" width="100" height="16" fill="${C.claro}" stroke="${C.tinta}" stroke-width="3"/><rect x="24" y="58" width="92" height="16" fill="${C.claro}" stroke="${C.tinta}" stroke-width="3"/><rect x="16" y="76" width="108" height="16" fill="${C.claro}" stroke="${C.tinta}" stroke-width="3"/><path d="M8 30 L8 102 L132 102 L132 30" fill="none" stroke="${C.azul}" stroke-width="8"/>`,
+          `${fT(52, 82, "%", 64, C.tinta)}${ic(84, 26, 0.9, icones.setaBaixo(C.azul))}`,
+          `${ic(10, 30, 1, icones.moeda)}${ic(82, 30, 0.9, icones.setaBaixo(C.azul))}`,
+          `<path d="M70 108 L70 52" stroke="${C.azul2}" stroke-width="8"/><path d="M70 70 C 40 70, 26 50, 28 30 C 52 30, 70 46, 70 70 Z" fill="${C.azul}"/><path d="M70 60 C 96 60, 112 40, 110 18 C 86 18, 70 36, 70 60 Z" fill="${C.azul}"/>`,
+        ];
+        const tDeg = [W("estabilizar", "impostos"), W("Selic", "impostos"), W("impostos", "impostos"), W("investir", "impostos")];
+        icDeg.forEach((inner, i) => {
+          const top = 560 - i * 95;
+          const el = obj(c6, "icd" + i, 110 + i * 240, top - 118, 140, 112, inner);
+          el.style.transformOrigin = "50% 100%";
+          aparece(el, tDeg[i] - 0.1, 0.3, i === 3 ? { scaleX: 1, scaleY: 0.05, y: 0 } : { scale: 0.2, y: 30 });
+          if (i < 3) {
+            const seta = obj(c6, "sd" + i, 210 + i * 240, top - 100, 170, 70, `<path id="sd${i}-p" d="M10 60 C 50 0, 120 0, 160 40" stroke="${C.verm}" stroke-width="6" stroke-dasharray="1 0" fill="none" stroke-linecap="round"/>`, false, false);
+            desenha(`#sd${i}-p`, tDeg[i + 1] - 0.35, 0.3, 200);
+          }
+        });
+        const merc6 = rotulo(c6, "merc6", 340, 118, 400, "<span>O MERCADO GOSTA</span>", "tag taga", "font-size:32px");
+        aparece(merc6, W("aprecia", "impostos") - 0.1, 0.3, { scale: 0.3, y: 20 });
+
+        // ══════════════════════════════════════════════════════════════════════
+        // CENA 7 · TRABALHO — CLT flexível, a casa com 10 dentro, Justiça do Trabalho, 6x1
+        // ══════════════════════════════════════════════════════════════════════
+        const c7 = cena(7, 13110, 460);
+        const ctps = obj(c7, "ctps", 400, 190, 280, 380, `
+          <rect width="280" height="380" rx="18" fill="${C.azul}"/><rect x="18" y="18" width="244" height="344" rx="10" fill="none" stroke="${C.claro}" stroke-width="3" opacity=".6"/>
+          <circle cx="140" cy="136" r="56" fill="none" stroke="${C.claro}" stroke-width="6"/>
+          <path d="M140 96 L150 126 L182 126 L156 145 L166 176 L140 157 L114 176 L124 145 L98 126 L130 126 Z" fill="${C.claro}"/>
+          ${fT(140, 252, "CARTEIRA", 36, C.claro)}${fT(140, 292, "DE TRABALHO", 28, C.claro)}`);
+        aparece(ctps, B.clt + 0.03, 0.4, { y: -360, scale: 1, rotation: -12 });
+        const tFlex = W("flexibilização", "clt");
+        tl.fromTo(ctps, { skewX: 0, scaleX: 1 }, { skewX: 1, scaleX: 1, duration: 1.3, immediateRender: false,
+          ease: (p) => Math.sin(Math.floor(p * 16) / 16 * Math.PI * 5) * (1 - p) * 22 }, tFlex - 0.05);
+        const flex7 = rotulo(c7, "flex7", 360, 128, 360, "<span>FLEXIBILIZAR</span>", "tag tagt", "font-size:38px");
+        aparece(flex7, tFlex + 0.1, 0.28, { scale: 0.3, y: 20 });
+        tl.to(ctps, { y: 110, scale: 0.15, rotation: -10, autoAlpha: 0, duration: 0.35, ease: S(0.35, "power2.in") }, B.sistema - 0.05);
+        some(flex7, B.sistema - 0.05, 0.25, { y: -40, scale: 0.6 });
+        const casa7 = obj(c7, "casa7", 350, 168, 380, 352, `
+          <path d="M0 140 L190 0 L380 140 Z" fill="${C.verm}"/>${fT(190, 116, "CLT", 62, C.claro)}
+          <path d="${pRet(320, 222, 77)}" transform="translate(30 130)" fill="${C.claro}"/>
+          <rect x="50" y="248" width="280" height="96" fill="${C.kraft}" opacity=".7"/>`);
+        aparece(casa7, B.sistema + 0.05, 0.4, { y: 300, scale: 1 });
+        const perks = [
+          [190, 186, icones.sol, "FÉRIAS", W("tudo", "sistema")],
+          [190, 330, icones.moeda, "13º", W("tudo", "sistema") + 0.15],
+          [790, 186, `<rect x="4" y="8" width="52" height="48" rx="6" fill="${C.claro}" stroke="${C.tinta}" stroke-width="4"/><rect x="4" y="8" width="52" height="14" fill="${C.tinta}"/>${fT(30, 50, "4x3", 18, C.verm)}`, "JORNADA", W("4x3", "sistema") - 0.1],
+          [790, 330, icones.coracao, "SAÚDE", W("tudo", "sistema", 2)],
+        ];
+        perks.forEach(([x, y, icn, txt, t], k) => {
+          const p = obj(c7, "perk" + k, x, y, 110, 120, `${ic(17, 0, 1.25, icn)}${fT(55, 112, txt, 20)}`);
+          aparece(p, t, 0.28, { scale: 0.1, y: 40 });
+        });
+        const dentro7 = obj(c7, "dentro7", 402, 430, 280, 84, multidao(280, 84, 10, 1, C.azul, 7), false, false);
+        revela(dentro7, W("10", "sistema") - 0.1, 0.35, "inset(0% 50% 0% 50%)");
+        const fora7 = obj(c7, "fora7", 20, 530, 1040, 120, multidao(1040, 120, 90, 3, C.kraft2, 17), false, false);
+        revela(fora7, W("pessoas", "sistema") - 0.05, 0.5, "inset(0% 50% 0% 50%)");
+        const so10 = rotulo(c7, "so10", 350, 124, 380, "<span>SÓ 10 DENTRO</span>", "tag tagv", "font-size:40px");
+        aparece(so10, W("dentro", "sistema") - 0.1, 0.25, { scale: 1.6, rotation: -6, y: 0 });
+        // Justiça do Trabalho
+        const trib7 = obj(c7, "trib7", 1230, 230, 380, 330, `
+          <path d="M190 0 L380 80 L0 80 Z" fill="${C.kraft2}"/><rect x="10" y="84" width="360" height="34" fill="${C.tinta}"/>${fT(190, 109, "JUSTIÇA DO TRABALHO", 21, C.claro)}
+          ${[0, 1, 2, 3, 4].map((i) => `<rect x="${34 + i * 70}" y="124" width="30" height="160" fill="${C.claro}"/>`).join("")}
+          <rect x="0" y="286" width="380" height="20" fill="${C.kraft2}"/><rect x="-14" y="306" width="408" height="22" fill="${C.kraft}"/>`);
+        trib7.style.transformOrigin = "50% 100%";
+        aparece(trib7, B.justica - 0.1, 0.35, { y: 240, scale: 1 });
+        const mart7 = obj(c7, "mart7", 1480, 110, 190, 130, `<rect x="10" y="20" width="120" height="56" rx="12" fill="${C.kraft2}" stroke="${C.tinta}" stroke-width="5"/><rect x="62" y="70" width="18" height="60" rx="6" fill="${C.tinta}" transform="rotate(40 70 76)"/>`, true, false);
+        mart7.style.transformOrigin = "30% 70%";
+        aparece(mart7, B.justica + 0.2, 0.25, { y: -100, scale: 1, rotation: -30 });
+        const tFimJ = W("fim", "justica");
+        tl.to(mart7, { rotation: 35, duration: 0.1, ease: "power4.in" }, tFimJ - 0.05);
+        const fim7 = rotulo(c7, "fim7", 1250, 392, 340, "<span>FIM</span>", "selo", "font-size:110px");
+        carimba(fim7, tFimJ + 0.05, -8, 1.2);
+        tl.to(trib7, { scaleY: 0.4, y: 40, duration: 0.5, ease: S(0.5, "power2.in") }, W("trabalho", "justica"));
+        // 6x1
+        const pec7 = obj(c7, "pec7", 1720, 150, 320, 380, documento(320, 380, 91, "PEC", "FIM DA ESCALA 6x1"));
+        aparece(pec7, B["6x1"] - 0.05, 0.35, { y: -400, scale: 1, rotation: 8 });
+        const contra7 = rotulo(c7, "contra7", 1700, 300, 360, "<span>CONTRA</span>", "selo", "font-size:76px");
+        carimba(contra7, W("contrário", "6x1") + 0.12, -9, 1.1);
+        const sem7 = obj(c7, "sem7", 2090, 160, 540, 190, `
+          <rect width="540" height="190" rx="12" fill="${C.claro}"/><rect width="540" height="44" rx="12" fill="${C.tinta}"/>${fT(270, 33, "ESCALA 6x1", 28, C.claro)}
+          ${["D", "S", "T", "Q", "Q", "S", "S"].map((d, i) => fM(42 + i * 76, 72, d, 20, C.tinta, "middle")).join("")}`);
+        aparece(sem7, W("escala", "6x1") - 0.2, 0.35, { y: -300, scale: 1 });
+        const t6x1 = W("6x1", "6x1");
+        [1, 2, 3, 4, 5, 6, 0].forEach((d, k) => {
+          const folga = d === 0;
+          const cel = obj(c7, "cel7-" + d, 2104 + d * 76, 84 + 160, 64, 94, `<rect width="64" height="94" rx="6" fill="${folga ? C.azul : C.verm}"/>${fT(32, 60, folga ? "F" : "T", 30, C.claro)}`, false, false);
+          aparece(cel, t6x1 - 0.1 + k * 0.07, 0.18, { scale: 0.2, y: 0 });
+        });
+        const sab7 = obj(c7, "sab7", 2310, 372, 180, 92, `<rect x="4" y="10" width="172" height="76" rx="34" fill="${C.rosa}"/><rect x="20" y="22" width="80" height="14" rx="7" fill="${C.claro}" opacity=".5"/>${[0, 1, 2].map((i) => `<circle cx="${150 + i * 14}" cy="${8 - i * 6}" r="${7 - i * 2}" fill="none" stroke="${C.azul}" stroke-width="3"/>`).join("")}`);
+        aparece(sab7, W("sabonetando", "6x1") - 0.1, 0.35, { x: 420, scale: 1, rotation: 30 });
+        const xsab7 = obj(c7, "xsab7", 2350, 360, 100, 100, icones.xis(), false, false);
+        aparece(xsab7, W("muito", "6x1") - 0.05, 0.2, { scale: 2.2, y: 0 });
+        some([sab7, xsab7], W("popular", "6x1") - 0.2, 0.25);
+        const gente7 = [], verm7 = [];
+        for (let k = 0; k < 10; k++) {
+          const x = 1790 + k * 82;
+          gente7.push(obj(c7, "g7-" + k, x, 480, 62, 150, pessoa(62, 150, C.kraft2), false));
+          if (k < 8) {
+            const v = obj(c7, "gv7-" + k, x, 480, 62, 150, pessoa(62, 150, C.verm, `<rect x="44" y="-6" width="10" height="64" rx="5" fill="${C.verm}" transform="rotate(14 49 58)"/>`), false, false);
+            tl.set(v, { autoAlpha: 0 }, 0);
+            verm7.push(v);
+          }
+        }
+        gente7.forEach((g, k) => aparece(g, W("popular", "6x1") - 0.1 + k * 0.04, 0.25, { y: 120, scale: 1 }));
+        const t80 = W("80", "6x1");
+        verm7.forEach((v, k) => tl.set(v, { autoAlpha: 1 }, t80 + k * 0.06));
+        const s80 = rotulo(c7, "s80", 1980, 352, 560, "<span>80% APOIA</span>", "selo", "font-size:74px");
+        carimba(s80, W("%", "6x1") + 0.15, -6, 1.1);
+
+        // ══════════════════════════════════════════════════════════════════════
+        // CENA 8 · ESTATAIS — autonomia do BC, vende Correios, não vende Petrobras
+        // ══════════════════════════════════════════════════════════════════════
+        const c8 = cena(8, 16330, 0);
+        const bc8 = obj(c8, "bc8", 60, 230, 300, 330, `
+          <path d="M150 0 L300 70 L0 70 Z" fill="${C.tinta}"/><rect x="10" y="74" width="280" height="16" fill="${C.kraft2}"/>
+          ${[0, 1, 2, 3, 4].map((i) => `<rect x="${26 + i * 54}" y="96" width="30" height="170" fill="${C.kraft}"/>`).join("")}
+          <rect x="0" y="268" width="300" height="22" fill="${C.kraft2}"/><rect x="-12" y="290" width="324" height="22" fill="${C.tinta}"/>
+          <circle cx="150" cy="180" r="44" fill="${C.claro}" stroke="${C.tinta}" stroke-width="8"/>${[0, 1, 2, 3].map((i) => `<rect x="146" y="146" width="8" height="34" fill="${C.tinta}" transform="rotate(${i * 45} 150 180)"/>`).join("")}`);
+        const cor8 = obj(c8, "cor8", 390, 250, 300, 310, `
+          <rect x="138" y="190" width="24" height="120" fill="${C.kraft2}"/>
+          <path d="${pRet(300, 196, 93)}" fill="${C.claro}"/><path d="M0 0 L150 110 L300 0" fill="none" stroke="${C.kraft2}" stroke-width="10"/>
+          <path d="M0 196 L120 90 M300 196 L180 90" stroke="${C.kraft2}" stroke-width="6" fill="none"/>`);
+        const pet8 = obj(c8, "pet8", 720, 210, 300, 350, `
+          <path d="M90 350 L150 30 L210 350" fill="none" stroke="${C.tinta}" stroke-width="12"/>
+          ${[0, 1, 2, 3, 4].map((i) => `<path d="M${100 + i * 10} ${300 - i * 60} L${200 - i * 10} ${250 - i * 60}" stroke="${C.tinta}" stroke-width="6"/>`).join("")}
+          <rect x="120" y="14" width="60" height="24" fill="${C.tinta}"/>
+          <path d="M250 150 C 250 150, 290 200, 290 228 C 290 252, 272 266, 250 266 C 228 266, 210 252, 210 228 C 210 200, 250 150, 250 150 Z" fill="${C.tinta}"/>`);
+        const lb8 = [["BANCO CENTRAL", 30], ["CORREIOS", 360], ["PETROBRAS", 690]].map(([t, x], k) =>
+          rotulo(c8, "lb8-" + k, x, 574, 360, t, "rotl", "font-size:32px"));
+        const tAut = W("autonomia", "estatais");
+        aparece(bc8, tAut - 0.25, 0.35, { y: 260, scale: 1 }); aparece(lb8[0], tAut - 0.15, 0.3, { y: 30, scale: 1 });
+        const aut8 = rotulo(c8, "aut8", 30, 148, 360, "<span>AUTONOMIA TOTAL</span>", "tag taga", "font-size:30px");
+        aparece(aut8, W("total", "estatais") - 0.1, 0.25, { scale: 0.3, y: 20 });
+        const tPriv = W("privatizar", "estatais");
+        aparece(cor8, tPriv - 0.3, 0.35, { y: 260, scale: 1 }); aparece(lb8[1], tPriv - 0.2, 0.3, { y: 30, scale: 1 });
+        const preco8 = obj(c8, "preco8", 600, 196, 150, 160, `<path d="M20 0 L40 50" stroke="${C.tinta}" stroke-width="3"/><path d="M14 54 L120 40 L142 120 L36 134 Z" fill="${C.verm}"/><circle cx="40" cy="66" r="8" fill="${C.claro}"/>${fT(82, 102, "VENDE", 24, C.claro)}`);
+        preco8.style.transformOrigin = "15% 0%";
+        aparece(preco8, W("Correios", "estatais") - 0.1, 0.3, { y: -120, scale: 1, rotation: 30 });
+        const tPet = W("contra", "estatais");
+        aparece(pet8, tPet - 0.3, 0.35, { y: 260, scale: 1 }); aparece(lb8[2], tPet - 0.2, 0.3, { y: 30, scale: 1 });
+        const nao8 = rotulo(c8, "nao8", 700, 290, 340, "<span>NÃO</span>", "selo", "font-size:120px");
+        carimba(nao8, W("Petrobras", "estatais") + 0.05, -10, 1.2);
+
+        // ══════════════════════════════════════════════════════════════════════
+        // CENA 9 · MÁQUINA PÚBLICA — encolhe, digitaliza, corta penduricalho, funde município
+        // ══════════════════════════════════════════════════════════════════════
+        const c9 = cena(9, 17930, 460);
+        const lmaq = rotulo(c9, "lmaq", 60, 120, 460, "<span>MÁQUINA PÚBLICA</span>", "tag tagt", "font-size:32px");
+        const gears = [[90, 220, 140, 12, C.azul, 1], [330, 150, 90, 9, C.kraft2, -1.5], [320, 380, 75, 8, C.tinta, -1.8]].map(([x, y, r, n, cor, v], k) => {
+          const g = obj(c9, "g9-" + k, x, y, r * 2, r * 2, engrenagem(r, n, cor), true, false);
+          tl.fromTo(g.firstChild, { rotation: 0 }, { rotation: 360 * v, duration: 14, ease: S(14, "none"), immediateRender: false }, B.maquina);
+          return g;
+        });
+        aparece(lmaq, B.maquina + 0.02, 0.3, { scale: 0.3, y: 20 });
+        gears.forEach((g, k) => aparece(g, B.maquina + 0.05 + k * 0.08, 0.35, { scale: 0.1, y: 0 }));
+        const tDra = W("drástica", "maquina");
+        [[35, 5], [-60, 65], [-47, -42]].forEach(([dx, dy], k) =>
+          tl.to(gears[k], { scale: 0.5, x: dx, y: dy, duration: 0.6, ease: S(0.6, "power2.inOut") }, tDra - 0.1));
+        const red9 = rotulo(c9, "red9", 470, 150, 560, "<span>REDUÇÃO DRÁSTICA</span>", "selo", "font-size:44px");
+        carimba(red9, tDra + 0.15, -4);
+        const tDig = W("digitalização", "maquina");
+        const forms = [];
+        for (let k = 0; k < 5; k++) {
+          const f = obj(c9, "form9-" + k, 600 + k * 9, 336 - k * 10, 140, 180, `<path d="${pRet(140, 180, 95 + k)}" fill="${C.claro}"/>${[0, 1, 2, 3].map((i) => `<rect x="16" y="${30 + i * 32}" width="16" height="16" fill="none" stroke="${C.tinta}" stroke-width="3"/><rect x="40" y="${36 + i * 32}" width="80" height="6" rx="3" fill="${C.tinta}" opacity=".25"/>`).join("")}`);
+          aparece(f, tDig - 0.5 + k * 0.05, 0.25, { y: -200, scale: 1, rotation: (k - 2) * 8 });
+          tl.to(f, { x: 860 + 75 - (600 + k * 9 + 70), y: 430 - (336 - k * 10 + 90), scale: 0.12, autoAlpha: 0, duration: 0.3, ease: S(0.3, "power2.in") }, tDig + 0.35 + k * 0.17);
+          forms.push(f);
+        }
+        const cel9 = obj(c9, "cel9", 860, 280, 150, 290, `<rect width="150" height="290" rx="22" fill="${C.tinta}"/><rect x="12" y="34" width="126" height="220" rx="8" fill="${C.claro}"/>
+          ${[0, 1, 2].map((i) => `<rect x="26" y="${56 + i * 40}" width="98" height="24" rx="6" fill="${C.azul}" opacity="${0.4 + i * 0.2}"/>`).join("")}<circle cx="75" cy="272" r="8" fill="${C.claro}" opacity=".5"/>`);
+        aparece(cel9, tDig - 0.1, 0.35, { scale: 0.2, y: 60 });
+        const chk9 = obj(c9, "chk9", 905, 470, 60, 60, icones.check(C.azul), false, false);
+        aparece(chk9, tDig + 1.3, 0.2, { scale: 2, y: 0 });
+        // supersalário e penduricalhos
+        const hol9 = obj(c9, "hol9", 1250, 150, 400, 320, `<path d="${pRet(400, 320, 97)}" fill="${C.claro}"/>${fM(30, 46, "HOLERITE", 22, C.tinta, "start", 0.6)}${fT(200, 104, "SUPERSALÁRIO", 40, C.verm)}
+          ${[0, 1, 2, 3, 4].map((i) => `<rect x="30" y="${140 + i * 32}" width="${180 + rnd(i + 70) * 80}" height="8" rx="4" fill="${C.tinta}" opacity=".2"/><rect x="300" y="${140 + i * 32}" width="70" height="8" rx="4" fill="${C.tinta}" opacity=".2"/>`).join("")}`);
+        aparece(hol9, W("fim", "maquina") - 0.1, 0.35, { y: -380, scale: 1, rotation: -6 });
+        const pend = ["AUX", "BÔNUS", "+", "GRAT.", "EXTRA"].map((txt, k) => {
+          const p = obj(c9, "pend9-" + k, 1268 + k * 76, 466, 62, 124, `<path d="M31 0 L31 54" stroke="${C.tinta}" stroke-width="3"/><path d="M6 54 L56 54 L56 112 L31 124 L6 112 Z" fill="${C.amar}"/><circle cx="31" cy="66" r="5" fill="${C.claro}"/>${fT(31, 98, txt, txt.length > 3 ? 13 : 18, C.tinta)}`, false, false);
+          p.style.transformOrigin = "50% 0%";
+          aparece(p, W("salários", "maquina") - 0.1 + k * 0.07, 0.25, { y: -40, scale: 1, rotation: 25 });
+          ferve(p.firstChild, 7, 900 + k, B.maquina + 4, B["2mil"], 5);
+          return p;
+        });
+        const tes9 = obj(c9, "tes9", 1120, 520, 180, 120, tesouraPeq(), true, false);
+        const tPend = W("penduricalhos", "maquina");
+        aparece(tes9, tPend - 0.4, 0.25, { x: -200, scale: 1 });
+        tl.to(tes9, { x: 430, duration: 0.55, ease: S(0.55, "none") }, tPend - 0.15);
+        pend.forEach((p, k) => cai(p, tPend - 0.05 + k * 0.1, (rnd(k + 5) - 0.5) * 80, 420, (rnd(k + 6) - 0.5) * 160, 0.6));
+        some(tes9, tPend + 0.5, 0.25, { x: 600 });
+        const cidade = (seed, txt) => `${ic(10, 80, 1, casinha(60, 60, C.claro, seed))}${ic(70, 60, 1.3, casinha(60, 60, C.kraft, seed + 1))}${ic(140, 92, 0.9, casinha(60, 60, C.claro, seed + 2))}
+          <rect x="0" y="160" width="200" height="12" fill="${C.kraft2}"/>`;
+        const tA9 = obj(c9, "tA9", 1700, 380, 210, 180, cidade(110));
+        const tB9 = obj(c9, "tB9", 1960, 380, 210, 180, cidade(120));
+        const inv9 = [1700, 1960].map((x, k) => rotulo(c9, "inv9-" + k, x, 340, 210, "<span>INVIÁVEL</span>", "tag tagv", "font-size:24px"));
+        const tFus = W("fusão", "maquina");
+        [tA9, tB9].forEach((el, k) => aparece(el, tFus - 0.3 + k * 0.1, 0.3, { y: 200, scale: 1 }));
+        inv9.forEach((el, k) => aparece(el, tFus - 0.1 + k * 0.1, 0.25, { scale: 0.2, y: 0 }));
+        const tMun = W("municípios", "maquina");
+        tl.to([tA9, inv9[0]], { x: 120, duration: 0.4, ease: S(0.4, "power2.inOut") }, tMun);
+        tl.to([tB9, inv9[1]], { x: -120, duration: 0.4, ease: S(0.4, "power2.inOut") }, tMun);
+        tl.to(inv9, { autoAlpha: 0, duration: 0.1 }, tMun + 0.4);
+        const fus9 = rotulo(c9, "fus9", 1780, 300, 340, "<span>FUSÃO</span>", "tag tagt", "font-size:44px");
+        aparece(fus9, tMun + 0.4, 0.28, { scale: 1.8, rotation: -8, y: 0 });
+        // a cidade de 2 mil habitantes
+        const chao9 = obj(c9, "chao9", 2280, 598, 1080, 44, `<rect width="1080" height="44" fill="${C.kraft2}"/>${[0, 1, 2, 3, 4, 5, 6, 7, 8].map((i) => `<rect x="${30 + i * 120}" y="19" width="60" height="6" fill="${C.claro}"/>`).join("")}`, false, false);
+        aparece(chao9, B["2mil"], 0.3, { y: 60, scale: 1 });
+        const casas9 = [[2575, 512], [2665, 512], [3030, 512], [3122, 512], [3214, 512]].map(([x, y], k) => {
+          const c = obj(c9, "casa9-" + k, x, y, 86, 86, casinha(86, 86, k % 2 ? C.kraft : C.claro, 130 + k));
+          c.style.transformOrigin = "50% 100%";
+          aparece(c, W("municípios", "2mil") - 0.1 + k * 0.08, 0.25, { scaleX: 1, scaleY: 0.1, y: 0 });
+          return c;
+        });
+        const placa9 = obj(c9, "placa9", 2320, 330, 230, 270, `<rect x="104" y="120" width="22" height="150" fill="${C.kraft2}"/><path d="${pRet(230, 136, 141)}" fill="${C.claro}" stroke="${C.tinta}" stroke-width="5"/>
+          ${fM(115, 34, "POPULAÇÃO", 18, C.tinta, "middle", 0.7)}${fT(115, 92, "2.000", 50, C.tinta)}${fM(115, 122, "HABITANTES", 18, C.tinta, "middle", 0.7)}`);
+        placa9.style.transformOrigin = "50% 100%";
+        aparece(placa9, W("2", "2mil") - 0.15, 0.3, { scaleX: 1, scaleY: 0.1, y: 0 });
+        const pref9 = obj(c9, "pref9", 2760, 300, 260, 300, `
+          <rect x="128" y="-60" width="5" height="62" fill="${C.tinta}"/><path d="M133 -60 L176 -48 L133 -36 Z" fill="${C.verm}"/>
+          <path d="M130 0 L260 60 L0 60 Z" fill="${C.kraft2}"/><rect x="8" y="60" width="244" height="30" fill="${C.tinta}"/>${fT(130, 82, "PREFEITURA", 21, C.claro)}
+          ${[0, 1, 2, 3].map((i) => `<rect x="${30 + i * 56}" y="96" width="28" height="170" fill="${C.claro}"/>`).join("")}<rect x="0" y="266" width="260" height="34" fill="${C.kraft2}"/>`);
+        pref9.style.transformOrigin = "50% 100%";
+        aparece(pref9, W("prefeitura", "2mil") - 0.2, 0.35, { scaleX: 1, scaleY: 0.1, y: 0 });
+        const ver9 = obj(c9, "ver9", 2560, 606, 720, 80, multidao(720, 80, 9, 1, C.tinta, 27, true), false, false);
+        revela(ver9, W("vereador", "2mil") - 0.1, 0.4, "inset(0% 100% 0% 0%)");
+        const pfto9 = obj(c9, "pfto9", 2850, 192, 80, 110, pessoa(80, 110, C.tinta, `<path d="M10 40 L70 100" stroke="${C.verm}" stroke-width="10"/>`));
+        pfto9.style.transformOrigin = "50% 100%";
+        aparece(pfto9, W("prefeito", "2mil") - 0.1, 0.3, { scaleX: 1, scaleY: 0.1, y: 0 });
+        const tralha = [
+          `<rect x="0" y="20" width="110" height="34" rx="12" fill="${C.verm}"/><rect x="22" y="2" width="62" height="26" rx="8" fill="${C.verm}"/><circle cx="26" cy="56" r="11" fill="${C.tinta}"/><circle cx="84" cy="56" r="11" fill="${C.tinta}"/>`,
+          `<rect x="0" y="0" width="80" height="60" fill="${C.kraft2}"/><rect x="0" y="8" width="80" height="52" fill="${C.kraft}"/>`,
+          `${[0, 1, 2, 3].map((i) => `<rect x="${i * 2}" y="${50 - i * 12}" width="80" height="10" fill="${C.claro}" stroke="${C.tinta}" stroke-width="2"/>`).join("")}`,
+          `<rect x="10" y="0" width="56" height="40" fill="${C.azul}"/><rect x="10" y="36" width="56" height="10" fill="${C.azul2}"/><rect x="14" y="46" width="6" height="22" fill="${C.tinta}"/><rect x="56" y="46" width="6" height="22" fill="${C.tinta}"/>`,
+          `<rect x="0" y="0" width="5" height="70" fill="${C.tinta}"/><path d="M5 2 L60 14 L5 28 Z" fill="${C.azul}"/>`,
+          `<path d="M8 10 L56 10 L50 60 L14 60 Z" fill="${C.claro}" stroke="${C.tinta}" stroke-width="4"/><path d="M56 22 C 72 22, 72 44, 52 44" fill="none" stroke="${C.tinta}" stroke-width="4"/>`,
+        ];
+        const posTralha = [[2440, 534], [2730, 540], [2980, 520], [3250, 530], [2620, 450], [3150, 444]];
+        const tMonte = W("monte", "2mil");
+        tralha.forEach((inner, k) => {
+          const [x, y] = posTralha[k];
+          const it = obj(c9, "tr9-" + k, x, y, 110, 70, inner);
+          aparece(it, tMonte - 0.15 + k * 0.1, 0.3, { y: -520, scale: 1, rotation: (rnd(k + 33) - 0.5) * 90 });
+        });
+        tl.fromTo(placa9, { rotation: 0 }, { rotation: 1, duration: 0.9, immediateRender: false, ease: (p) => Math.sin(Math.floor(p * 11) * 1.9) * 8 * (1 - p) }, W("coisa", "2mil") - 0.2);
+
+        // ══════════════════════════════════════════════════════════════════════
+        // CENA 10 · INDÚSTRIA — o minério fica, 50% brasileiro, e o peso dos juros
+        // ══════════════════════════════════════════════════════════════════════
+        const c10 = cena(10, 21750, 0);
+        const mar10 = obj(c10, "mar10", 520, 548, 600, 100, `<rect y="14" width="600" height="86" fill="${C.azul}"/><path d="M0 18 ${Array.from({ length: 12 }, (_, i) => `Q${25 + i * 50} ${i % 2 ? 30 : 4} ${50 + i * 50} 18`).join(" ")}" fill="none" stroke="${C.claro}" stroke-width="5"/>`, false, false);
+        const fab10 = obj(c10, "fab10", 80, 300, 352, 288, `<g transform="scale(.8)"><path d="M0 360 L0 170 L80 120 L80 170 L160 120 L160 170 L240 120 L240 170 L320 120 L320 30 L360 30 L360 170 L400 170 L400 0 L440 0 L440 360 Z" fill="${C.kraft2}"/>
+          ${[0, 1, 2, 3, 4, 5].map((i) => `<rect x="${24 + (i % 3) * 90}" y="${210 + Math.floor(i / 3) * 70}" width="44" height="40" fill="${C.tinta}" opacity=".55"/>`).join("")}</g>`);
+        const nav10 = obj(c10, "nav10", 610, 372, 300, 190, `
+          ${[0, 1, 2, 3, 4].map((i) => `<path d="${pBolha(70 + i * 40, 70 - (i % 2) * 14, 30, 24, 150 + i)}" fill="${C.kraft2}"/>`).join("")}
+          <path d="M0 96 L300 96 L262 176 L30 176 Z" fill="${C.tinta}"/>${fM(150, 146, "MINÉRIO", 22, C.claro, "middle")}<rect x="220" y="40" width="50" height="56" fill="${C.claro}"/>`, true, false);
+        aparece(fab10, B.industria + 0.02, 0.35, { y: 260, scale: 1 });
+        aparece(mar10, B.industria + 0.05, 0.3, { y: 80, scale: 1 });
+        aparece(nav10, B.industria + 0.1, 0.4, { x: 300, scale: 1 });
+        tl.fromTo(nav10.firstChild, { y: 0 }, { y: 1, duration: 17, immediateRender: false, ease: (p) => Math.sin(Math.floor(p * 17 * 6) * 1.3) * 5 }, B.industria);
+        const tExp = W("exportar", "industria");
+        tl.to(nav10, { x: 230, duration: 0.9, ease: S(0.9, "power1.in") }, tExp - 0.1);
+        const xis10 = obj(c10, "xis10", 940, 380, 110, 110, `<circle cx="55" cy="55" r="52" fill="${C.verm}"/>${ic(25, 25, 1, icones.xis(C.claro))}`);
+        aparece(xis10, W("matéria", "industria") + 0.1, 0.25, { scale: 2.2, y: 0 });
+        const tProc = W("processa", "industria");
+        tl.to(nav10, { x: -10, duration: 0.8, ease: S(0.8, "power2.out") }, tProc + 0.05);
+        const min10 = rotulo(c10, "min10", 540, 150, 500, "<span>MINERAIS CRÍTICOS</span>", "tag tagt", "font-size:34px");
+        aparece(min10, W("minerais", "industria") - 0.1, 0.25, { scale: 0.3, y: 20 });
+        const tInt = W("internamente", "industria");
+        for (let k = 0; k < 3; k++) {
+          const r = obj(c10, "rocha10-" + k, 660 + k * 40, 400, 60, 50, `<path d="${pBolha(30, 25, 28, 22, 160 + k)}" fill="${C.kraft2}"/>`, false, false);
+          tl.set(r, { autoAlpha: 0 }, 0);
+          tl.fromTo(r, { autoAlpha: 1, x: 0, y: 0 }, { x: -380 - k * 30, y: 60, duration: 0.45, ease: S(0.45, "power1.inOut"), immediateRender: false }, tInt - 0.5 + k * 0.12);
+          tl.to(r, { autoAlpha: 0, duration: 0.05 }, tInt - 0.05 + k * 0.12);
+        }
+        const prods = [
+          `<rect x="10" y="10" width="70" height="70" rx="6" fill="${C.tinta}"/>${[0, 1, 2, 3].map((i) => `<rect x="${18 + i * 16}" y="0" width="6" height="10" fill="${C.kraft2}"/><rect x="${18 + i * 16}" y="80" width="6" height="10" fill="${C.kraft2}"/>`).join("")}${fT(45, 54, "CHIP", 16, C.claro)}`,
+          `<rect x="20" y="4" width="50" height="86" rx="8" fill="${C.azul}"/><rect x="34" y="0" width="22" height="8" fill="${C.azul2}"/><path d="M50 22 L36 52 L48 52 L40 76 L58 42 L46 42 Z" fill="${C.amar}"/>`,
+          `<path d="M14 10 L34 10 L34 56 C34 70, 56 70, 56 56 L56 10 L76 10 L76 56 C76 96, 14 96, 14 56 Z" fill="${C.verm}"/><rect x="14" y="10" width="20" height="14" fill="${C.claro}"/><rect x="56" y="10" width="20" height="14" fill="${C.claro}"/>`,
+        ];
+        prods.forEach((inner, k) => {
+          const p = obj(c10, "prod10-" + k, 90 + k * 115, 168, 90, 96, inner);
+          aparece(p, tInt + 0.1 + k * 0.12, 0.3, { y: 180, scale: 0.3 });
+        });
+        // marco regulatório
+        const marco10 = obj(c10, "marco10", 1180, 150, 400, 470, documento(400, 470, 171, "MARCO", "REGULATÓRIO"));
+        aparece(marco10, W("marco", "industria") - 0.15, 0.35, { y: -420, scale: 1, rotation: -6 });
+        const barra10 = obj(c10, "barra10", 1650, 190, 170, 420, `<rect width="170" height="420" rx="8" fill="${C.claro}" stroke="${C.tinta}" stroke-width="6"/><rect x="10" y="90" width="150" height="120" fill="none" stroke="${C.tinta}" stroke-width="3" stroke-dasharray="10 8" opacity=".4"/>`);
+        aparece(barra10, W("regulatório", "industria") - 0.1, 0.3, { scaleX: 1, scaleY: 0.1, y: 0 });
+        const s20 = obj(c10, "s20", 1660, 200, 150, 80, `<rect width="150" height="80" fill="${C.kraft2}"/>${fT(75, 52, "20%", 34, C.claro)}`, false, false);
+        s20.style.transformOrigin = "50% 0%";
+        aparece(s20, W("20", "industria") - 0.1, 0.3, { scaleX: 1, scaleY: 0.02, y: 0 });
+        const s50 = obj(c10, "s50", 1660, 400, 150, 200, `<rect width="150" height="200" fill="${C.azul}"/>${fT(75, 116, "50%", 40, C.claro)}`, false, false);
+        s50.style.transformOrigin = "50% 100%";
+        aparece(s50, W("50", "industria") - 0.1, 0.4, { scaleX: 1, scaleY: 0.02, y: 0 });
+        const l20 = rotulo(c10, "l20", 1840, 206, 330, "ATÉ 20%<br>ESTRANGEIRO", "mono", "font-size:28px");
+        const l50 = rotulo(c10, "l50", 1840, 456, 330, "PELO MENOS 50%<br>BRASILEIRO", "mono", `font-size:28px;color:${C.azul}`);
+        aparece(l20, W("estrangeira", "industria") - 0.1, 0.25, { x: -30, scale: 1, y: 0 });
+        aparece(l50, W("capital", "industria") - 0.1, 0.25, { x: -30, scale: 1, y: 0 });
+        // de onde vem o dinheiro? juros de 14,5%
+        const cofre10 = obj(c10, "cofre10", 2300, 290, 330, 320, `
+          <rect width="330" height="320" rx="16" fill="${C.tinta}"/><rect x="24" y="24" width="282" height="272" rx="8" fill="#14121f"/>
+          <path d="M40 40 L110 110 M40 90 L90 40 M60 60 C 80 50, 90 70, 100 60" stroke="${C.claro}" stroke-width="2" fill="none" opacity=".45"/>
+          <path d="M330 30 L420 0 L420 330 L330 300 Z" fill="${C.kraft2}"/><circle cx="378" cy="160" r="26" fill="${C.claro}" stroke="${C.tinta}" stroke-width="5"/>`);
+        aparece(cofre10, B.juros + 0.05, 0.35, { y: 260, scale: 1 });
+        const onde10 = rotulo(c10, "onde10", 2290, 152, 420, "<span>DE ONDE VEM<br>O DINHEIRO?</span>", "tag tagt", "font-size:30px;line-height:1.05");
+        aparece(onde10, W("onde", "juros") - 0.1, 0.25, { scale: 0.3, y: 20 });
+        const q10 = rotulo(c10, "q10", 2700, 120, 220, "?", "interro", "font-size:330px");
+        carimba(q10, W("como", "juros") + 0.08, 8, 1);
+        const inv10 = obj(c10, "inv10", 2980, 470, 220, 140, `<g transform="translate(40 0) scale(.32)"><path d="M0 360 L0 170 L80 120 L80 170 L160 120 L160 170 L240 120 L240 170 L320 120 L320 30 L360 30 L360 170 L400 170 L400 0 L440 0 L440 360 Z" fill="${C.azul}"/></g>${fM(110, 136, "INVESTIMENTO", 18, C.tinta, "middle")}`);
+        inv10.style.transformOrigin = "50% 100%";
+        aparece(inv10, W("iniciativa", "juros") - 0.1, 0.3, { scaleX: 1, scaleY: 0.1, y: 0 });
+        const peso10 = obj(c10, "peso10", 2940, 356, 300, 230, `<path d="M120 10 C 120 -30, 180 -30, 180 10" fill="none" stroke="${C.tinta}" stroke-width="16"/>
+          <path d="M40 40 L260 40 L300 230 L0 230 Z" fill="${C.tinta}"/>${fT(150, 160, "14,5%", 70, C.claro)}${fM(150, 206, "JUROS", 22, C.claro, "middle", 0.7)}`, true, false);
+        const tJur = W("14,5%", "juros");
+        tl.set(peso10, { autoAlpha: 0 }, 0);
+        tl.fromTo(peso10, { autoAlpha: 1, y: -820 }, { y: 0, duration: 0.28, ease: S(0.28, "power3.in"), immediateRender: false }, tJur - 0.32);
+        tl.to(inv10, { scaleY: 0.18, duration: 0.08, ease: "none" }, tJur - 0.05);
+        treme(tJur - 0.04, 24, 0.5, 1010);
+
+        // ══════════════════════════════════════════════════════════════════════
+        // CENA 11 · BITCOIN — reserva, "pra quê?", e o Livro Amarelo
+        // ══════════════════════════════════════════════════════════════════════
+        const c11 = cena(11, 25570, 460);
+        const btc11 = obj(c11, "btc11", 80, 190, 260, 260, moedaBTC(260), true, false);
+        const tBtc = W("Bitcoin", "btc");
+        tl.set(btc11, { autoAlpha: 0 }, 0);
+        tl.fromTo(btc11, { autoAlpha: 1, x: 760, rotation: 540 }, { x: 0, rotation: 0, duration: 0.8, ease: S(0.8, "power2.out"), immediateRender: false }, tBtc - 0.45);
+        const cad11 = obj(c11, "cad11", 60, 520, 640, 90, Array.from({ length: 6 }, (_, i) =>
+          `<rect x="${i * 110}" y="12" width="70" height="66" rx="6" fill="${i % 2 ? C.amar : C.kraft2}" stroke="${C.tinta}" stroke-width="4"/>${i < 5 ? `<rect x="${i * 110 + 70}" y="40" width="40" height="10" fill="${C.tinta}"/>` : ""}`).join(""));
+        revela(cad11, W("blockchain", "btc") - 0.1, 0.55, "inset(0% 100% 0% 0%)");
+        const cof11 = obj(c11, "cof11", 640, 200, 320, 310, `<rect width="320" height="310" rx="14" fill="${C.tinta}"/><rect x="22" y="22" width="276" height="266" rx="8" fill="#14121f"/>
+          <rect x="22" y="200" width="276" height="8" fill="${C.kraft2}" opacity=".5"/>`);
+        const porta11 = obj(c11, "porta11", 640, 200, 320, 310, `<rect width="320" height="310" rx="14" fill="${C.kraft2}" stroke="${C.tinta}" stroke-width="8"/>
+          <circle cx="160" cy="155" r="58" fill="${C.claro}" stroke="${C.tinta}" stroke-width="8"/>${[0, 1, 2, 3, 4, 5].map((i) => `<rect x="156" y="104" width="8" height="24" fill="${C.tinta}" transform="rotate(${i * 60} 160 155)"/>`).join("")}`, false, false);
+        porta11.style.transformOrigin = "0% 50%";
+        const tRes = W("reserva", "btc");
+        aparece(cof11, tRes - 0.4, 0.35, { y: 260, scale: 1 });
+        aparece(porta11, tRes - 0.4, 0.35, { y: 260, scale: 1 });
+        tl.to(porta11, { scaleX: 0.12, skewY: -12, duration: 0.3, ease: S(0.3, "power2.out") }, tRes + 0.1);
+        for (let k = 0; k < 7; k++) {
+          const m = obj(c11, "mb11-" + k, 690 + (k % 4) * 58, 400 - Math.floor(k / 4) * 62, 56, 56, moedaBTC(56), false, false);
+          aparece(m, W("estratégica", "btc") + k * 0.09, 0.2, { y: -260, scale: 1 });
+        }
+        const br11 = rotulo(c11, "br11", 620, 146, 360, "<span>RESERVA DO BRASIL</span>", "tag taga", "font-size:28px");
+        aparece(br11, W("Brasil", "btc") - 0.1, 0.25, { scale: 0.3, y: 20 });
+        const es11 = rotulo(c11, "es11", 60, 140, 380, "<span>COMO EL SALVADOR</span>", "tag tagt", "font-size:28px");
+        aparece(es11, W("Salvador", "btc") - 0.2, 0.25, { scale: 0.3, y: 20 });
+        const graf11 = obj(c11, "graf11", 1190, 170, 520, 400, `${grafPapel(520, 400, 181)}<path id="linha11" d="M60 330 L150 300 L230 312 L310 240 L380 200 L450 110" fill="none" stroke="${C.amar2}" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>`);
+        aparece(graf11, B.praque - 0.05, 0.35, { y: -380, scale: 1, rotation: 5 });
+        desenha("#linha11", W("valorizar", "praque") - 0.4, 0.6, 520);
+        const val11 = rotulo(c11, "val11", 1210, 118, 400, "<span>VAI VALORIZAR</span>", "tag tagt", "font-size:32px");
+        aparece(val11, W("valorizar", "praque") - 0.1, 0.25, { scale: 0.3, y: 20 });
+        const q11 = rotulo(c11, "q11", 1730, 90, 300, "?", "interro", "font-size:380px");
+        carimba(q11, W("quê", "praque") + 0.02, -8, 1.1);
+        treme(W("quê", "praque") + 0.05, 14, 0.3, 1111);
+        some([graf11, val11, q11], B.probtc + 0.1, 0.3, { y: 420, rotation: 10 });
+        const livro11 = obj(c11, "livro11", 1380, 168, 420, 440, `
+          <rect x="18" y="10" width="402" height="430" rx="8" fill="${C.claro}"/><rect x="0" y="0" width="400" height="430" rx="10" fill="${C.amar}"/>
+          <rect x="0" y="0" width="34" height="430" rx="10" fill="${C.amar2}"/>${fT(216, 170, "LIVRO", 70, C.tinta)}${fT(216, 240, "AMARELO", 64, C.tinta)}
+          ${fM(216, 300, "PROGRAMA DO PARTIDO", 20, C.tinta, "middle", 0.65)}`);
+        const tLiv = W("Livro", "probtc");
+        tl.set(livro11, { autoAlpha: 0 }, 0);
+        tl.fromTo(livro11, { autoAlpha: 1, y: -700, rotation: -8 }, { y: 0, rotation: -2, duration: 0.3, ease: S(0.3, "power3.in"), immediateRender: false }, tLiv - 0.3);
+        treme(tLiv, 16, 0.3, 1112);
+        const med11 = obj(c11, "med11", 1810, 150, 170, 240, `<path d="M50 120 L30 236 L64 212 L84 236 L94 130 Z" fill="${C.verm}"/><path d="M120 120 L140 236 L106 212 L86 236 L76 130 Z" fill="${C.verm2}"/>
+          <circle cx="85" cy="85" r="80" fill="${C.amar2}"/><circle cx="85" cy="85" r="66" fill="${C.amar}"/>${fT(85, 112, "1ª", 64, C.tinta)}`);
+        aparece(med11, W("primeira", "probtc") - 0.1, 0.3, { scale: 0.1, y: 0, rotation: -40 });
+        const pro11 = rotulo(c11, "pro11", 1330, 482, 520, "<span>PRÓ-BITCOIN</span>", "selo", "font-size:66px");
+        carimba(pro11, W("explicitamente", "probtc") + 0.1, -8, 1.1);
+
+        // ══════════════════════════════════════════════════════════════════════
+        // CENA 12 · O PROBLEMA — governabilidade, "coisas sensatas", tudo ao mesmo tempo
+        // ══════════════════════════════════════════════════════════════════════
+        const c12 = cena(12, 28340, 0);
+        const cg12 = obj(c12, "cg12", 300, 180, 736, 430, `<g transform="scale(1.6)">${congresso(false, false)}</g>`);
+        const cup12 = obj(c12, "cup12", 360, 490, 240, 86, `<path d="M4 84 A116 82 0 0 1 236 84 Z" fill="${C.kraft2}"/>`, false);
+        const tig12 = obj(c12, "tig12", 757, 490, 274, 90, `<path d="M2 0 L272 0 C258 92, 16 92, 2 0 Z" fill="${C.kraft2}"/>`, false);
+        cup12.style.transformOrigin = "50% 100%"; tig12.style.transformOrigin = "50% 100%";
+        const tGov = W("governabilidade", "govern");
+        revela(cg12, tGov - 0.25, 0.5);
+        aparece(cup12, tGov + 0.15, 0.3, { scaleX: 1, scaleY: 0.1, y: 0 });
+        aparece(tig12, tGov + 0.25, 0.3, { scaleX: 1, scaleY: 0.1, y: 0 });
+        const ren12 = obj(c12, "ren12", 70, 368, 110, 240, pessoa(110, 240, C.tinta, gravata(110, 240)));
+        const nren12 = rotulo(c12, "nren12", 30, 326, 190, "<span>RENAN</span>", "tag", "font-size:26px");
+        aparece(ren12, W("Renan", "govern") - 0.1, 0.3, { y: 200, scale: 1 });
+        aparece(nren12, W("Renan", "govern") + 0.05, 0.25, { scale: 0.3, y: 10 });
+        const grade12 = obj(c12, "grade12", 196, 430, 110, 180, `${[0, 1, 2, 3, 4].map((i) => `<rect x="${i * 24}" y="10" width="10" height="170" fill="${C.tinta}"/><path d="M${i * 24} 10 L${i * 24 + 5} 0 L${i * 24 + 10} 10 Z" fill="${C.tinta}"/>`).join("")}<rect x="0" y="50" width="106" height="10" fill="${C.tinta}"/><rect x="0" y="130" width="106" height="10" fill="${C.tinta}"/>`);
+        aparece(grade12, W("fora", "govern") - 0.1, 0.3, { scaleX: 1, scaleY: 0.1, y: 60 });
+        const tPod = W("poder", "govern");
+        tl.to([cup12, tig12], { scale: 0.72, duration: 0.5, ease: S(0.5, "power2.inOut") }, tPod - 0.05);
+        const setas12 = [[440, 380], [850, 380]].map(([x, y], k) => {
+          const s = obj(c12, "seta12-" + k, x, y, 80, 80, `${ic(10, 10, 1, icones.setaBaixo(C.verm))}`, false);
+          aparece(s, tPod - 0.05 + k * 0.1, 0.25, { y: -60, scale: 1 });
+          return s;
+        });
+        const lCam = rotulo(c12, "lCam", 760, 588, 270, "<span>CÂMARA</span>", "tag tagt", "font-size:24px");
+        const lSen = rotulo(c12, "lSen", 360, 588, 240, "<span>SENADO</span>", "tag tagt", "font-size:24px");
+        aparece(lCam, W("deputados", "govern") - 0.1, 0.25, { scale: 0.3, y: 10 });
+        aparece(lSen, W("Senado", "govern") - 0.1, 0.25, { scale: 0.3, y: 10 });
+        const pzA = obj(c12, "pzA", 40, 130, 236, 140, `<rect width="200" height="140" rx="10" fill="${C.azul}"/><circle cx="200" cy="70" r="30" fill="${C.azul}"/>${fT(100, 82, "GOVERNO", 28, C.claro)}`);
+        const pzB = obj(c12, "pzB", 300, 130, 200, 140, `<path d="M0 0 L200 0 L200 140 L0 140 L0 96 L36 70 L0 44 Z" fill="${C.kraft2}"/>${fT(110, 82, "CONGRESSO", 24, C.tinta)}`);
+        const tDif = W("difícil", "govern");
+        aparece(pzA, tDif - 0.3, 0.3, { x: -200, scale: 1 });
+        aparece(pzB, tDif - 0.2, 0.3, { x: 200, scale: 1 });
+        const tCoa = W("coalizão", "govern");
+        tl.to(pzA, { x: 34, duration: 0.25, ease: S(0.25, "power2.in") }, tCoa - 0.3);
+        tl.to(pzB, { x: -34, duration: 0.25, ease: S(0.25, "power2.in") }, tCoa - 0.3);
+        tl.to(pzA, { x: -20, rotation: -6, duration: 0.3, ease: S(0.3, "back.out(2)") }, tCoa - 0.05);
+        tl.to(pzB, { x: 20, rotation: 6, duration: 0.3, ease: S(0.3, "back.out(2)") }, tCoa - 0.05);
+        const xpz = obj(c12, "xpz", 238, 158, 80, 80, icones.xis(), false, false);
+        aparece(xpz, tCoa, 0.2, { scale: 2.4, y: 0 });
+        treme(tCoa - 0.02, 8, 0.2, 1212);
+        // coisas sensatas
+        const chk12 = obj(c12, "chk12", 1340, 160, 540, 430, `<path d="${pRet(540, 430, 191)}" fill="${C.claro}"/>${fT(270, 62, "COISAS MUITO SENSATAS", 32)}
+          ${[0, 1, 2, 3].map((i) => `<rect x="40" y="${110 + i * 76}" width="44" height="44" rx="6" fill="none" stroke="${C.tinta}" stroke-width="5"/><rect x="108" y="${126 + i * 76}" width="${240 + rnd(i + 80) * 140}" height="12" rx="6" fill="${C.tinta}" opacity=".2"/>`).join("")}`);
+        aparece(chk12, B.sensatas + 0.02, 0.35, { y: -400, scale: 1, rotation: 5 });
+        for (let i = 0; i < 4; i++) {
+          obj(c12, "ck12-" + i, 1374, 262 + i * 76, 60, 60, `<path id="ck12-${i}" d="M8 32 L24 48 L54 12" fill="none" stroke="${C.azul}" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>`, false, false);
+          desenha("#ck12-" + i, W("sensatas", "sensatas") - 0.2 + i * 0.16, 0.18, 90);
+        }
+        const mas12 = rotulo(c12, "mas12", 1640, 540, 260, "<span>MAS...</span>", "tag tagv", "font-size:40px");
+        aparece(mas12, W("anos", "sensatas") - 0.05, 0.22, { scale: 1.8, rotation: 10, y: 0 });
+        // a torre de reformas
+        const torre = grupo(c12, "torre", 2560, 200, 300, 440);
+        torre.style.transformOrigin = "50% 100%";
+        const rotBl = ["APOSENTADOS", "JUDICIÁRIO", "SAÚDE", "EDUCAÇÃO", "CLT", "BOLSA FAMÍLIA", "PREVIDÊNCIA"];
+        const corBl = [C.kraft2, C.tinta, C.verm, C.azul, C.kraft2, C.azul2, C.verm2];
+        const tBl = [W("aposentados", "tudo"), W("judiciário", "tudo")];
+        const tTudo = W("Tudo", "tudo");
+        const blocos12 = rotBl.map((txt, k) => {
+          const b = obj(torre, "bl12-" + k, (rnd(k + 300) - 0.5) * 24, 440 - (k + 1) * 62, 300, 60,
+            `<path d="${pRet(300, 60, 200 + k, 2, 30)}" fill="${corBl[k]}"/>${fT(150, 40, txt, txt.length > 10 ? 24 : 28, corBl[k] === C.kraft2 ? C.tinta : C.claro)}`);
+          aparece(b, (k < 2 ? tBl[k] : tTudo + (k - 2) * 0.17) - 0.2, 0.25, { y: -560, scale: 1, rotation: (rnd(k + 310) - 0.5) * 30 });
+          return b;
+        });
+        const tIns = W("primeiros", "instavel");
+        const tCtl = W("controle", "instavel");
+        const dBal = tCtl - tIns, nBal = Math.round(dBal * 12);
+        tl.fromTo(torre, { rotation: 0 }, { rotation: 1, duration: dBal, immediateRender: false,
+          ease: (p) => { const q = Math.floor(p * nBal) / nBal; return Math.sin(q * Math.PI * 2 * dBal * 1.1) * (1.2 + q * q * 9); } }, tIns);
+        const mkt12 = obj(c12, "mkt12", 2960, 170, 360, 280, `${grafPapel(360, 280, 211)}${fM(200, 40, "MERCADO", 22, C.tinta, "middle", 0.7)}
+          <path id="mkt12-p" d="M60 90 L110 110 L140 96 L180 150 L210 132 L250 196 L300 220" fill="none" stroke="${C.verm}" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>`);
+        aparece(mkt12, W("mercado", "instavel") - 0.25, 0.3, { y: -300, scale: 1, rotation: 6 });
+        desenha("#mkt12-p", W("medo", "instavel") - 0.3, 0.5, 380);
+        const medo12 = rotulo(c12, "medo12", 2950, 468, 380, "<span>MEDO</span>", "tag tagv", "font-size:44px");
+        aparece(medo12, W("medo", "instavel") - 0.05, 0.25, { scale: 1.8, rotation: -8, y: 0 });
+        blocos12.forEach((b, k) => cai(b, tCtl + 0.05 + k * 0.03, (rnd(k + 400) - 0.5) * 900, 420 + rnd(k + 410) * 160, (rnd(k + 420) - 0.5) * 220, 0.7));
+        treme(tCtl + 0.1, 26, 0.6, 1222);
+
+        // ══════════════════════════════════════════════════════════════════════
+        // CENA 13 · FECHO — de volta ao plano: 90% não passa sem ruptura e caos
+        // ══════════════════════════════════════════════════════════════════════
+        cenaAtual = 13;
+        const marcas0 = abas0.map((a, i) => {
+          const ok = i < 2;
+          const m = obj(c0, "mk0-" + i, 606, 333 + i * 27 - 3, 30, 30, `<g transform="scale(.5)">${ok ? icones.check(C.azul) : icones.xis(C.verm)}</g>`, false, false);
+          aparece(m, ok ? W("pautas", "fecho") - 0.1 + i * 0.12 : W("90", "fecho") + 0.15 + (i - 2) * 0.07, 0.15, { scale: 2.2, y: 0 });
+          return m;
+        });
+        const av0 = rotulo(c0, "av0", 640, 130, 420, "<span>ALGUMAS PAUTAS</span>", "tag taga", "font-size:30px");
+        aparece(av0, W("avançar", "fecho") - 0.1, 0.25, { scale: 0.3, y: 20 });
+        some(av0, W("90", "fecho") - 0.15, 0.2, { y: -40 });
+        const s90 = rotulo(c0, "s90", 600, 110, 440, "<span>90%</span>", "selo", "font-size:130px");
+        carimba(s90, W("90", "fecho") + 0.08, -8, 1.2);
+        const racha0 = obj(c0, "racha0", 620, 250, 420, 330, `<path id="racha0-p" d="M220 0 L196 46 L238 92 L190 140 L232 186 L200 232 L246 280 L214 330" fill="none" stroke="${C.verm}" stroke-width="12" stroke-linejoin="miter"/>`, false, false);
+        const tRup = W("ruptura", "fecho");
+        desenha("#racha0-p", tRup - 0.1, 0.5, 700);
+        treme(tRup + 0.2, 12, 0.3, 1313);
+        const rup0 = rotulo(c0, "rup0", 610, 590, 470, "<span>RUPTURA INSTITUCIONAL</span>", "tag tagt", "font-size:28px");
+        aparece(rup0, W("institucional", "fecho") - 0.2, 0.25, { scale: 1.6, rotation: -5, y: 0 });
+        const tCaos = W("caos", "fecho");
+        abas0.concat(marcas0, moedas0).forEach((el, k) => cai(el, tCaos - 0.05 + (k % 7) * 0.03, (rnd(k + 500) - 0.4) * 900, -200 + rnd(k + 510) * 700, (rnd(k + 520) - 0.5) * 600, 0.8));
+        tl.to(cong0, { rotation: -4, y: 20, duration: 0.3, ease: S(0.3, "power2.out") }, tCaos);
+        tl.to(folha0, { rotation: 6, duration: 0.3, ease: S(0.3, "power2.out") }, tCaos);
+        const caos0 = rotulo(c0, "caos0", 120, 420, 840, "<span>CAOS</span>", "selo", "font-size:150px");
+        caos0.style.zIndex = 5;
+        carimba(caos0, tCaos + 0.12, -6, 1.4);
+        treme(tCaos + 0.15, 30, 0.7, 1314);
+
+        // ══════════════════════════════════════════════════════════════════════
+        // TIMELINE DA CÂMERA E DOS CAPÍTULOS
+        // ══════════════════════════════════════════════════════════════════════
+        vai(1, 560, B.linha);
+        camPara(camS(1, 590, 1.04), B.linha + 0.7, B.colossal - B.linha - 1.4, "sine.inOut");
+        vai(2, 540, B.colossal);
+        camPara(camS(2, 1450, 1.0), B["3tri"] - 0.15, 0.8);
+        camPara(camS(2, 1700, 0.86), tPib - 0.35, 0.8);
+        vai(3, 540, B.gini45);
+        camPara(camS(3, 430, 1.06), B.gini45 + 0.6, B.brasil55 - B.gini45 - 1.4, "sine.inOut");
+        camPara(camS(3, 540, 1.0), B.brasil55 - 0.2, 1.0);
+        camPara(camS(3, 660, 1.06), W("intervém", "brasil55") - 0.3, 1.4);
+        camPara(camS(3, 540, 0.98), tProm - 0.35, 0.45);
+        vai(4, 540, B.aposent);
+        camPara(camS(4, 560, 1.03), B.aposent + 0.6, B.pisos - B.aposent - 1.6, "sine.inOut");
+        camPara(camS(4, 1400, 1.0), B.pisos - 0.3, 0.8);
+        vai(5, 420, B.bolsa);
+        camPara(camS(5, 450, 1.03), B.bolsa + 0.6, B.otario - B.bolsa - 1.2, "sine.inOut");
+        camPara(camS(5, 720, 1.0), B.otario - 0.3, 0.7);
+        vai(6, 540, B.impostos);
+        camPara(camS(6, 570, 1.04), B.impostos + 0.6, B.clt - B.impostos - 1.0, "sine.inOut");
+        vai(7, 540, B.clt);
+        camPara(camS(7, 560, 1.03), B.clt + 0.5, B.justica - B.clt - 1.0, "sine.inOut");
+        camPara(camS(7, 1420, 1.0), B.justica - 0.35, 0.6);
+        camPara(camS(7, 2190, 1.0), B["6x1"] - 0.35, 0.7);
+        vai(8, 540, B.estatais);
+        camPara(camS(8, 540, 1.04), B.estatais + 0.6, B.maquina - B.estatais - 1.0, "sine.inOut");
+        vai(9, 540, B.maquina);
+        camPara(camS(9, 1700, 0.95), W("fim", "maquina") - 0.4, 0.7);
+        camPara(camS(9, 2800, 0.95), B["2mil"] - 0.3, 0.8);
+        vai(10, 540, B.industria);
+        camPara(camS(10, 1650, 1.0), W("marco", "industria") - 0.35, 0.7);
+        camPara(camS(10, 2780, 0.95), B.juros - 0.3, 0.8);
+        vai(11, 540, B.btc);
+        camPara(camS(11, 1650, 1.0), B.praque - 0.3, 0.7);
+        camPara(camS(11, 1690, 1.0), B.probtc - 0.2, 0.6);
+        vai(12, 560, B.govern);
+        camPara(camS(12, 1610, 1.0), B.sensatas - 0.3, 0.7);
+        camPara(camS(12, 2800, 0.95), B.tudo - 0.3, 0.8);
+        vai(0, 590, B.fecho, 1.0);
+        camPara(camS(0, 600, 1.05), B.fecho + 2.0, tCaos - B.fecho - 2.2, "sine.inOut");
+        camPara(camS(0, 600, 1.12), tCaos + 0.1, DUR - tCaos - 0.2, "sine.out");
+
+        const titulos = ["A LINHA", "CORTE DE GASTOS", "DESIGUALDADE", "PREVIDÊNCIA", "BOLSA FAMÍLIA", "IMPOSTOS", "TRABALHO", "ESTATAIS", "MÁQUINA PÚBLICA", "INDÚSTRIA", "BITCOIN"];
+        const inicios = [B.linha, B.colossal, B.gini45, B.aposent, B.bolsa, B.impostos, B.clt, B.estatais, B.maquina, B.industria, B.btc, B.govern, B.fecho, DUR];
+        titulos.forEach((t, k) => capitulo(String(k + 1).padStart(2, "0"), t, inicios[k], inicios[k + 1]));
+        capitulo(null, "E SE ELE GANHAR?", B.govern, B.fecho);
+        capitulo(null, "A CONCLUSÃO", B.fecho, DUR);
+
+        // ── fervura: cada cena ferve só enquanto está por perto ───────────────
+        const janela = { 0: [0, B.linha + 1] };
+        for (let i = 1; i <= 12; i++) janela[i] = [inicios[i - 1] - 0.8, inicios[i] + 0.8];
+        Object.keys(fervura).forEach((k) => {
+          const i = +k;
+          fervura[k].forEach((el, n) => {
+            const amp = 0.45 + rnd(i * 50 + n) * 0.5, seed = i * 100 + n;
+            if (i === 0 || i === 13) {
+              ferve(el.firstChild, amp, seed, 0, B.linha + 1);
+              ferve(el.firstChild, amp, seed + 7, B.fecho - 1, DUR);
+            } else ferve(el.firstChild, amp, seed, Math.max(0, janela[i][0]), Math.min(DUR, janela[i][1]));
+          });
+        });
+
+        // ── RAUL: enquadramento alternado por bloco, para a emenda virar "corte de câmera" ──
+        D.blocos.forEach((b, i) => {
+          const z = i % 2 ? 1.08 : 1.0;
+          tl.fromTo("#raul-cam", { scale: z }, { scale: z + 0.03, duration: b.dur, ease: "none", immediateRender: false }, b.inicio);
+        });
+
+        // ── borda rasgada da folha (clip) e a fibra clara por baixo ────────────
+        const pts = [], fib = [];
+        for (let x = 0; x <= 1080; x += 9) {
+          const y = 768 + Math.sin(x / 61) * 5 + Math.sin(x / 23 + 1) * 3 + (rnd(x + 5) - 0.5) * 9;
+          pts.push([x, y]);
+          fib.push([x, y + 5 + rnd(x + 77) * 7]);
+        }
+        const borda = pts.map((p) => p[0] + " " + p[1].toFixed(1)).join(" L");
+        $("#topo").style.clipPath = `path("M0 0 L1080 0 L${borda.split(" L").reverse().join(" L")} Z")`;
+        const fibra = (dy) => "M0 660 L1080 660 L" + fib.slice().reverse().map((p) => p[0] + " " + (p[1] + dy).toFixed(1)).join(" L") + " Z";
+        $("#rasgo-fibra").setAttribute("d", fibra(0));
+        $("#rasgo-sombra").setAttribute("d", fibra(14));
+
+        // ── LEGENDA ───────────────────────────────────────────────────────────
+        const leg = $("#leg");
+        D.legenda.forEach((c, i) => {
+          const e = document.createElement("div");
+          e.className = "etq";
+          const txt = c.palavras.map((p) => p.w).join(" ");
+          e.style.fontSize = Math.min(92, Math.floor(930 / (txt.length * 0.74))) + "px";
+          e.innerHTML = c.palavras.map((p) => `<span>${p.w}</span>`).join(" ");
+          leg.appendChild(e);
+          const rot = (rnd(i + 3000) - 0.5) * 5;
+          tl.set(e, { xPercent: -50, yPercent: -50, autoAlpha: 0 }, 0);
+          tl.fromTo(e, { autoAlpha: 1, scale: 0.72, rotation: rot * 2.2, y: 10 },
+            { scale: 1, rotation: rot, y: 0, duration: 0.14, ease: "back.out(2.4)", immediateRender: false }, c.ini);
+          tl.set(e, { autoAlpha: 0 }, c.fim);
+          const spans = e.querySelectorAll("span");
+          c.palavras.forEach((p, k) => {
+            tl.set(spans[k], { color: C.tinta, scale: 1 }, 0);
+            tl.set(spans[k], { color: C.verm, scale: 1 + 0.36 / Math.max(6, p.w.length) }, Math.max(c.ini, p.s - 0.03));
+            if (k + 1 < c.palavras.length) tl.set(spans[k], { color: C.tinta, scale: 1 }, c.palavras[k + 1].s - 0.03);
+          });
+        });
+
+        window.__timelines["main"] = tl;
+      })();
+    </script>
+  </body>
+</html>

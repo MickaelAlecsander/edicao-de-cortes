@@ -1,0 +1,80 @@
+<!doctype html>
+<!--
+  CAPA do corte (o modelo da capa do C84). Um quadro do Raul olhando para a câmera, de olhos abertos, embaixo; em cima a
+  folha de papel com uma cena da animação e a manchete em 2 a 3 etiquetas (a mesma ideia do gancho; a palavra-chave na
+  etiqueta vermelha). Sem selo de nome e sem a marca do canal. A manchete fica de y 250 a ~600 e o rosto do Raul inteiro
+  no recorte 3:4 do centro (y 240–1680), que é o que a grade do perfil mostra. Capa não acusa ("ROUBOU?" ao lado do rosto).
+  assets/raul.jpg  = 1080×960, um quadro do assets/raul.mp4 (ffmpeg -ss <t> -i ../assets/raul.mp4 -frames:v 1 assets/raul.jpg)
+  assets/mundo.png = 600×317, um pedaço da animação (snapshot com --zoom x,y,600,317 --zoom-scale 1)
+  assets/papel.png e assets/grao.png: o montar.py copia.
+  npx --yes hyperframes@0.8.99 snapshot capa --at 0.5 --no-end --describe false -o renders/_capa → renders/cNN_capa.jpg
+-->
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: #000; }
+      #root { position: relative; width: 100%; height: 100%; overflow: hidden; }
+      /* Raul: o mesmo enquadramento do vídeo (50/50) */
+      #raul { position: absolute; left: 0; top: 960px; width: 1080px; height: 960px; object-fit: cover; }
+      /* a folha de papel de cima, com a borda rasgada */
+      #topo { position: absolute; left: 0; top: 0; width: 1080px; height: 990px; background: #efe6d3 url(assets/papel.png) repeat; }
+      #grao { position: absolute; inset: 0; background: url(assets/grao.png) repeat; mix-blend-mode: overlay; opacity: 0.5; }
+      #rasgo { position: absolute; left: 0; top: 0; width: 1080px; height: 1252px; }
+      #rasgo-sombra { filter: blur(7px); opacity: 0.55; }
+      /* a cena da animação, com as bordas esfumadas, embaixo da manchete */
+      #mundo { position: absolute; left: 240px; top: 648px; width: 600px; height: 317px;
+        -webkit-mask-image: linear-gradient(to right, transparent, #000 5%, #000 95%, transparent), linear-gradient(to bottom, transparent, #000 3%, #000 97%, transparent); -webkit-mask-composite: source-in; mask-image: linear-gradient(to right, transparent, #000 5%, #000 95%, transparent), linear-gradient(to bottom, transparent, #000 3%, #000 97%, transparent); mask-composite: intersect; }
+      .linha {
+        position: absolute; left: 50%; white-space: nowrap; background: #f8f2e4; color: #1e1b2e;
+        font-family: "Archivo Black", sans-serif; line-height: 1; letter-spacing: -0.015em;
+        padding: 16px 30px 14px; border-radius: 6px;
+        box-shadow: 0 8px 0 rgba(30, 27, 46, 0.3), 0 22px 30px rgba(30, 27, 46, 0.35);
+      }
+      /* cada linha cabe em ~1000 px: ~12 letras a 84 px; texto maior pede letra menor */
+      #l1 { top: 250px; font-size: 84px; }
+      #l2 { top: 366px; font-size: 88px; color: #f8f2e4; background: #e5432d; padding: 18px 40px 14px; }
+      #l3 { top: 506px; font-size: 84px; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="capa" data-start="0" data-duration="1" data-width="1080" data-height="1920">
+      <img id="raul" class="clip" data-start="0" data-duration="1" data-track-index="0" src="assets/raul.jpg" alt="" />
+      <svg id="rasgo" class="clip" data-start="0" data-duration="1" data-track-index="1" viewBox="0 0 1080 1252">
+        <path id="rasgo-sombra" fill="#1e1b2e" d="" />
+        <path id="rasgo-fibra" fill="#f8f2e4" d="" />
+      </svg>
+      <div id="topo" class="clip" data-start="0" data-duration="1" data-track-index="2">
+        <img id="mundo" src="assets/mundo.png" alt="" />
+        <div id="grao"></div>
+      </div>
+      <div id="l1" class="linha clip" data-start="0" data-duration="1" data-track-index="3">LINHA DE CIMA</div>
+      <div id="l2" class="linha clip" data-start="0" data-duration="1" data-track-index="4">A PALAVRA-CHAVE</div>
+      <div id="l3" class="linha clip" data-start="0" data-duration="1" data-track-index="5">LINHA DE BAIXO?</div>
+    </div>
+    <script>
+      const rnd = (i) => { const x = Math.sin(i * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
+      // borda rasgada em 960 (a mesma do vídeo)
+      const pts = [], fib = [];
+      for (let x = 0; x <= 1080; x += 9) {
+        const y = 960 + Math.sin(x / 61) * 5 + Math.sin(x / 23 + 1) * 3 + (rnd(x + 5) - 0.5) * 9;
+        pts.push([x, y]); fib.push([x, y + 5 + rnd(x + 77) * 7]);
+      }
+      const borda = pts.map((p) => p[0] + " " + p[1].toFixed(1)).join(" L");
+      document.getElementById("topo").style.clipPath = `path("M0 0 L1080 0 L${borda.split(" L").reverse().join(" L")} Z")`;
+      const fibra = (dy) => "M0 852 L1080 852 L" + fib.slice().reverse().map((p) => p[0] + " " + (p[1] + dy).toFixed(1)).join(" L") + " Z";
+      document.getElementById("rasgo-fibra").setAttribute("d", fibra(0));
+      document.getElementById("rasgo-sombra").setAttribute("d", fibra(14));
+
+      const tl = gsap.timeline({ paused: true });
+      // etiquetas coladas à mão: centradas e levemente tortas, cada uma para um lado
+      tl.set("#l1", { xPercent: -50, rotation: -2.2 }, 0);
+      tl.set("#l2", { xPercent: -50, rotation: 1.4 }, 0);
+      tl.set("#l3", { xPercent: -50, rotation: -2.6 }, 0);
+      window.__timelines["capa"] = tl;
+    </script>
+  </body>
+</html>
