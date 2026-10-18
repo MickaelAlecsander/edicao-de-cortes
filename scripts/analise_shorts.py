@@ -21,6 +21,7 @@ import json
 import math
 import os
 import re
+import shutil
 import subprocess
 import sys
 import time
@@ -42,6 +43,8 @@ qual quais quem cara gente coisa coisas assim tipo bem bom boa mesmo mesma outro
 hoje agora sempre nunca raul kkk kkkk kkkkk rs pelo pela pelos pelas sobre entre depois antes ver quer sabe sabia
 falar fala falou disse dizer diz acho acha achar olha vamos melhor dele deu dar fosse seria estava estavam consegue
 sei quero feito vem veio fazendo nosso nossa nossos nossas""".split())
+# o yt-dlp do PATH ou, no ambiente da skill (.venv-cortes), o módulo deste Python
+YTDLP = [shutil.which("yt-dlp")] if shutil.which("yt-dlp") else [sys.executable, "-m", "yt_dlp"]
 
 
 def sem_acento(s):
@@ -91,7 +94,7 @@ def vid(arg):
 def baixar(i):
     """Uma chamada do yt-dlp por short: metadados + comentários (top) + legenda automática original (pt.*-orig).
     429: PARA TUDO, sem nova tentativa (um IP marcado só volta com tempo; ver references/pesquisa-e-download.md)."""
-    cmd = ["yt-dlp", "--skip-download", "--no-simulate", "--force-overwrites", "--write-info-json", "--write-comments",
+    cmd = [*YTDLP, "--skip-download", "--no-simulate", "--force-overwrites", "--write-info-json", "--write-comments",
            "--write-auto-subs", "--sub-langs", "pt.*-orig", "--extractor-args", "youtube:max_comments=300,all,30;comment_sort=top",
            "-o", os.path.join(BRUTO, "%(id)s.%(ext)s"), "https://www.youtube.com/shorts/" + i]
     for _ in (1,):

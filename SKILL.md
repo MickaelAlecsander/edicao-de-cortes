@@ -51,6 +51,13 @@ animação não se aplicam.
 
 ## Instalação (uma vez por máquina)
 
+**O jeito mais fácil:** o comando de um passo do README (`instalar.ps1` no Windows, `instalar.sh` no Mac) instala os
+programas que faltam, baixa a skill e roda o `scripts/instalar.py`.
+
+**O Python dos scripts:** se existir o arquivo `.python` na pasta da skill, todo `python` dos comandos desta skill é o
+caminho escrito nele (ex.: `~/.venv-cortes/bin/python`). O instalador cria esse ambiente quando o Python do sistema
+recusa o pip (PEP 668: o do Homebrew no Mac, o do Debian/Ubuntu).
+
 `python scripts/instalar.py` (com o Python 3.11+) prepara a máquina numa rodada só. No fim, ele diz "✓ pronto para editar"
 ou lista o que faltou. Ele faz cinco coisas:
 1. Confere o Python, o ffmpeg e o ffprobe, o Node 18+ com o npx e o Chrome. O que não sai por pip ou npm, ele diz como

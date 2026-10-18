@@ -17,6 +17,7 @@ import math
 import os
 import re
 import statistics
+import shutil
 import subprocess
 import sys
 import time
@@ -27,6 +28,8 @@ RAIZ = os.environ.get("CORTES_RAIZ", os.getcwd())   # a raiz do projeto (rodar d
 P = lambda *a: os.path.join(RAIZ, *a)
 CANAL = "https://www.youtube.com/@investidorsardinha/shorts"
 TOP_BUSCA = 160          # só os mais virais passam pela busca de cópias (cada busca é um pedido ao YouTube)
+# o yt-dlp do PATH ou, no ambiente da skill (.venv-cortes), o módulo deste Python
+YTDLP = [shutil.which("yt-dlp")] if shutil.which("yt-dlp") else [sys.executable, "-m", "yt_dlp"]
 
 
 def tokens(s):
@@ -40,7 +43,7 @@ def parecido(a, b):
 
 
 def buscar(titulo):
-    out = subprocess.run(["yt-dlp", "--extractor-args", "youtube:player_client=web_safari,mweb", "--flat-playlist", "-J", "ytsearch15:" + titulo], capture_output=True, text=True,
+    out = subprocess.run([*YTDLP, "--extractor-args", "youtube:player_client=web_safari,mweb", "--flat-playlist", "-J", "ytsearch15:" + titulo], capture_output=True, text=True,
                          encoding="utf-8", timeout=120)
     if "429" in out.stderr or "Too Many Requests" in out.stderr:
         raise SystemExit("⛔ 429 (Too Many Requests) na busca. Parar tudo agora e só voltar depois de horas; as buscas já feitas ficam no cache.")
@@ -54,7 +57,7 @@ def main():
     lista = P("_pesquisa", "shorts_lista.json")
     if "--cache" not in sys.argv:
         with open(lista, "w", encoding="utf-8") as f:
-            subprocess.run(["yt-dlp", "--extractor-args", "youtube:player_client=web_safari,mweb", "--flat-playlist", "-J", CANAL], stdout=f, check=True)
+            subprocess.run([*YTDLP, "--extractor-args", "youtube:player_client=web_safari,mweb", "--flat-playlist", "-J", CANAL], stdout=f, check=True)
     E = [e for e in json.load(open(lista, encoding="utf-8"))["entries"] if e.get("view_count")]
     usados = set(re.findall(r"[A-Za-z0-9_-]{11}", open(P("LOG_CORTES.md"), encoding="utf-8").read())) if os.path.exists(P("LOG_CORTES.md")) else set()
 

@@ -3,3 +3,4 @@ scripts/package.json
 scripts/package-lock.json
 __pycache__/
 *.pyc
+.python

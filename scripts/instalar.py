@@ -34,6 +34,11 @@ AQUI = os.path.dirname(os.path.abspath(__file__))  # scripts/
 SKILL = os.path.dirname(AQUI)
 SO = {"win32": "windows", "darwin": "macos"}.get(sys.platform, "linux")
 HF = "hyperframes@0.8.99"
+# O ambiente Python da skill, criado SÓ quando o Python do sistema recusa o pip (PEP 668: o do Homebrew no Mac, o do
+# Debian/Ubuntu). O caminho do python dele fica gravado em <skill>/.python, que o SKILL.md manda usar nos scripts.
+VENV = os.environ.get("EDICAO_VENV") or os.path.join(os.path.expanduser("~"), ".venv-cortes")
+VPY = os.path.join(VENV, "Scripts", "python.exe") if SO == "windows" else os.path.join(VENV, "bin", "python")
+MARCA_PY = os.path.join(SKILL, ".python")
 # (módulo, pacote do pip, quem usa). opencv sem GUI: nenhum script abre janela, e a versão com GUI pede a libGL no Linux.
 PACOTES = [
     ("numpy", "numpy", "quase todos os scripts"),
@@ -187,14 +192,20 @@ def pacotes(instalar, pode_pip):
     for m, p, quem in PACOTES:
         if (m, p) not in faltam:
             ok("%s (%s)" % (", ".join("%s %s" % dv for dv in dists(m)) or m, quem))
-    gerenciado = sys.prefix == sys.base_prefix and os.path.exists(
-        os.path.join(sysconfig.get_path("stdlib"), "EXTERNALLY-MANAGED"))
+    gerenciado = os.environ.get("EDICAO_SIMULAR_PEP668") == "1" or (sys.prefix == sys.base_prefix and os.path.exists(
+        os.path.join(sysconfig.get_path("stdlib"), "EXTERNALLY-MANAGED")))   # a variável só serve para testar este caminho
     if faltam and instalar and pode_pip and gerenciado:  # PEP 668: o pip recusa instalar no Python do sistema
-        venv, py = ((r"py -m venv %USERPROFILE%\.venv-cortes", r"%USERPROFILE%\.venv-cortes\Scripts\python")
-                    if SO == "windows" else ("python3 -m venv ~/.venv-cortes", "~/.venv-cortes/bin/python"))
-        pode_pip = False
-        print("  ⛔ este Python é do sistema e o pip não instala nele: crie um ambiente virtual\n       → %s e rode "
-              "%s scripts/instalar.py (e use esse python nos scripts da skill)" % (venv, py))
+        print("  … este Python é do sistema e o pip não instala nele (PEP 668): crio o ambiente da skill em " + VENV, flush=True)
+        if not os.path.exists(VPY):
+            c, s = roda([sys.executable, "-m", "venv", VENV], timeout=600)
+            if c:
+                return falta("o ambiente virtual em %s: %s" % (VENV, ultima(s)),
+                             "Debian/Ubuntu: sudo apt install python3-venv; depois rode este instalador de novo")
+        open(MARCA_PY, "w", encoding="utf-8").write(VPY)
+        print("  → o instalador continua com %s (gravado em .python: é o Python dos scripts da skill)" % VPY, flush=True)
+        env = dict(os.environ)
+        env.pop("EDICAO_SIMULAR_PEP668", None)
+        sys.exit(subprocess.run([VPY, os.path.abspath(__file__), *sys.argv[1:]], env=env).returncode)
     if faltam and not (instalar and pode_pip):
         como = "rode este instalador sem --so-conferir" if not instalar else None
         for _, p in faltam:
@@ -394,6 +405,12 @@ def main():
     ap.add_argument("--sem-modelos", action="store_true", help="não baixa o Whisper nem o MMS_FA")
     ap.add_argument("--modelo-whisper", default="large-v3", help="large-v3 (padrão) ou medium, para máquina fraca")
     a = ap.parse_args()
+    # já existe o ambiente da skill (.python): tudo roda nele
+    if os.path.exists(MARCA_PY):
+        vpy = open(MARCA_PY, encoding="utf-8").read().strip()
+        if os.path.exists(vpy) and os.path.abspath(sys.prefix) != os.path.abspath(os.path.dirname(os.path.dirname(vpy))):
+            print("Skill edicao-de-cortes: o Python dela é %s (arquivo .python)" % vpy, flush=True)
+            sys.exit(subprocess.run([vpy, os.path.abspath(__file__), *sys.argv[1:]]).returncode)
     instalar = not a.so_conferir
     print("Skill edicao-de-cortes: %s em %s" % ("só conferindo" if a.so_conferir else "instalação", SKILL))
     pode_pip = sistema()

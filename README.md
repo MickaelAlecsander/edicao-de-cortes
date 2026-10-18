@@ -14,41 +14,58 @@ Skill que faz um corte vertical (1080×1920) do começo ao fim, sem nenhuma API 
 Ela nasceu no canal de cortes do Raul Sena (@cortesdoraulsena). Cada regra dela veio de um erro que já foi ao ar ou quase
 foi. Para usar com outro canal ou outro apresentador, veja "Outro canal" no fim do [SKILL.md](SKILL.md).
 
-## Instalar (uma vez por notebook)
+## Instalar (uma vez por notebook, Windows ou Mac)
 
-Precisa de: **Claude Code** (o app do Claude na aba Code, ou o `claude` no terminal), **Git**, **Python 3.11+**,
-**Node 18+**, **ffmpeg** e **Google Chrome**. O instalador confere tudo e diz como instalar o que faltar.
+### O jeito mais fácil: pedir ao Claude
 
-### Windows (PowerShell)
+Abra o **Claude Code** (a aba Code do app do Claude, ou o `claude` no terminal) e cole:
+
+> Instala a skill https://github.com/MickaelAlecsander/edicao-de-cortes
+
+O Claude lê esta página, segue a seção "Para o Claude" lá embaixo, instala o que faltar (pedindo o seu ok antes) e avisa
+quando terminar. Depois, abra uma conversa **nova** no Claude Code para a skill aparecer.
+
+### Ou um comando só
+
+**Windows** (PowerShell):
 
 ```powershell
-git clone https://github.com/MickaelAlecsander/edicao-de-cortes "$env:USERPROFILE\.claude\skills\edicao-de-cortes"
-cd "$env:USERPROFILE\.claude\skills\edicao-de-cortes"
-python scripts\instalar.py
+irm https://raw.githubusercontent.com/MickaelAlecsander/edicao-de-cortes/main/instalar.ps1 | iex
 ```
 
-### macOS e Linux
+**Mac** (Terminal):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/MickaelAlecsander/edicao-de-cortes/main/instalar.sh | bash
+```
+
+O comando:
+
+1. instala o que faltar: Git, Python 3.12, Node, ffmpeg e Google Chrome (no Windows pelo winget; no Mac pelo Homebrew);
+2. baixa a skill para a pasta de skills do Claude (`~/.claude/skills/edicao-de-cortes`);
+3. instala os pacotes do Python, o Whisper large-v3 (~3 GB), o alinhador MMS_FA (~1,2 GB) e o HyperFrames;
+4. monta um projeto de teste.
+
+Na 1ª vez leva de 10 a 30 min, por causa dos modelos. Ele termina com **"✓ pronto para editar"** ou com a lista do que
+faltou e como resolver.
+
+- **Mac sem o Homebrew:** o comando para e mostra como instalar o Homebrew. Ele pede a senha do Mac, que só você digita.
+  Depois, rode o comando de novo.
+- **Mac com o Python do Homebrew:** esse Python recusa instalar pacotes. O instalador cria sozinho o ambiente da skill
+  (`~/.venv-cortes`) e o Claude passa a usá-lo.
+- **Notebook fraco:** acrescente `--modelo-whisper medium` (Windows: `& ([scriptblock]::Create((irm <link>))) --modelo-whisper medium`;
+  Mac: `curl -fsSL <link> | bash -s -- --modelo-whisper medium`).
+
+### Manual
 
 ```bash
 git clone https://github.com/MickaelAlecsander/edicao-de-cortes ~/.claude/skills/edicao-de-cortes
 cd ~/.claude/skills/edicao-de-cortes
-python3 scripts/instalar.py
+python3 scripts/instalar.py          # no Windows: python scripts\instalar.py
 ```
 
-O instalador:
-
-- faz o `pip install` só do que falta;
-- põe o `playwright-core` em `scripts/`;
-- baixa o Whisper large-v3 (~3 GB) e o alinhador MMS_FA (~1,2 GB);
-- prepara o HyperFrames;
-- monta um projeto de teste.
-
-Ele termina com **"✓ pronto para editar"** ou com a lista do que faltou.
-
-Opções do instalador:
-
-- `--modelo-whisper medium`: para notebook fraco.
-- `--so-conferir`: só confere a máquina, sem instalar nada.
+O `scripts/instalar.py` confere e instala os pacotes, os modelos e o HyperFrames. Para só conferir a máquina, sem instalar
+nada: `--so-conferir`.
 
 ### Atualizar
 
@@ -91,3 +108,21 @@ A skill para em dois pontos para você aprovar: o **roteiro** e a **prévia**. N
 - as fontes do Google Fonts, só na 1ª montagem.
 
 O resto roda offline.
+
+## Para o Claude (instalação a pedido de alguém)
+
+Quando pedirem para instalar esta skill:
+
+1. Ver o sistema (Windows, macOS ou Linux) e dizer à pessoa, numa mensagem curta, o que vai ser instalado: os programas
+   que faltarem (Git, Python 3.12, Node, ffmpeg, Google Chrome), os pacotes do Python e os modelos (~4 GB). Pedir o ok
+   antes de instalar programas.
+2. Rodar o comando do sistema, em segundo plano (pode passar de 10 min), e acompanhar a saída:
+   - Windows, no PowerShell: `irm https://raw.githubusercontent.com/MickaelAlecsander/edicao-de-cortes/main/instalar.ps1 | iex`
+   - Mac ou Linux, no bash: `curl -fsSL https://raw.githubusercontent.com/MickaelAlecsander/edicao-de-cortes/main/instalar.sh | bash`
+3. Se faltar o Homebrew no Mac, o comando para e mostra a linha de instalação: quem roda é a PESSOA, no Terminal dela,
+   porque ele pede a senha do Mac. Nunca digitar senha. Depois, rodar o comando de novo.
+4. Se um programa acabou de ser instalado e "não aparece", abrir um terminal novo (o PATH muda) e rodar de novo.
+5. O fim certo é "✓ pronto para editar". Se vier a lista do que faltou, resolver item por item como ela diz e rodar
+   `python scripts/instalar.py --so-conferir` na pasta da skill para confirmar.
+6. Avisar a pessoa para abrir uma conversa NOVA no Claude Code (a skill carrega no começo da conversa) e pedir, por
+   exemplo: "faz um reels de vídeo real com este vídeo: <arquivo ou link>".
