@@ -3,6 +3,10 @@
 
     python borrar_regiao.py <video> --regiao x,y,w,h,t0,t1 [--regiao ...] [--borda 45] [--forca 26]
 
+    # de dentro da pasta do corte, entre o corte e o pos_cortar.py:
+    python <skill>/scripts/cortar.py . && python <skill>/scripts/borrar_regiao.py assets/raul.mp4 \
+        --regiao 0,670,520,220,8.8,13.0 && python pos_cortar.py
+
 Para o texto ou overlay do canal do Raul que aparece na janela dele: no C84, o "Deixe o like na CONFIANÇA" (x 0–520,
 y 670–890 da janela de 1080×960, de 8,8 a 13,0 s). É texto do canal dele, não do nosso. Também serve para a faixa de
 propaganda (a da AUVP com o QR code, no C81: y 688–960 da janela, de 56,5 a 65,8 s).

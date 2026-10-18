@@ -182,5 +182,13 @@ def main():
             print("  %9.3f-%9.3f  %3.0f ms  %4.0f dB  %s" % (p0, p1, (p1 - p0) * 1000, fundo, rot))
 
 
+def _teste():
+    assert normaliza("Lemann.") == "leman" and normaliza("carro") == "caro"  # letra dobrada (C84)
+    assert normaliza("Herança") == "eranca" and normaliza("hoje") == "oje"   # "h" mudo (C84)
+    assert normaliza("*") == "*" and normaliza("Bruno") == "bruno"
+
+
+_teste()
+
 if __name__ == "__main__":
     main()

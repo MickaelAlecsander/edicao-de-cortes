@@ -49,7 +49,8 @@ def main():
          % (ALVO, m["input_i"], m["input_tp"], m["input_lra"], m["input_thresh"], m["target_offset"]))
     m2 = loudnorm(bruto, f, "-c:v", "copy", "-ar", "48000", "-c:a", "aac", "-b:a", "256k", "-movflags", "+faststart", final)
     print("volume: %s → %s LUFS, pico %s dBTP (%s)" % (m["input_i"], m2["output_i"], m2["output_tp"], m2["normalization_type"]))
-    t = travadas(final, RAUL)
+    reels = os.path.exists(os.path.join(pasta, "reels.json"))   # reels de vídeo real: a pessoa ocupa a tela inteira
+    t = travadas(final, None if reels else RAUL)
     # TELA CHEIA (teste de 16/10/2026): enquanto a folha da animação cobre a tela inteira, a metade do Raul fica sem
     # movimento de propósito. O montar.py do corte grava as janelas em assets/tela_cheia.json ([[início, fim], ...], com a
     # subida e a descida da folha); trecho parado inteiro dentro de uma delas não conta
@@ -63,6 +64,7 @@ def main():
     if t:
         raise SystemExit("⛔ imagem do Raul parada: %s" % "; ".join("%.2f–%.2f s" % p for p in t))
     print("✓ nenhuma imagem parada na metade do Raul")
+    # abspath: com "." o normpath dava "." e a prévia saía "._previa.mp4"
     previa = os.path.join(r, os.path.basename(os.path.abspath(pasta)).split("-")[0] + "_previa.mp4")
     subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", final, "-vf", "scale=720:-2", "-c:v", "libx264", "-crf", "28", "-preset",
                     "medium", "-c:a", "copy", "-movflags", "+faststart", previa], check=True)
