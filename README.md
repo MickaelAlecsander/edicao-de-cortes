@@ -6,7 +6,9 @@ Skill que faz um corte vertical (1080×1920) do começo ao fim, sem nenhuma API 
 - ranqueia as falas e escreve o roteiro;
 - corta sem comer palavra;
 - confere fala, áudio e imagem quadro a quadro;
-- anima a metade de cima em papel recortado no HyperFrames, com sonoplastia;
+- monta o vídeo em um de dois modos: **Reels de vídeo real** (a pessoa na tela inteira, manchete, nome e função, imagens de
+  cobertura, logo e legenda nas cores da marca, como no Instagram da Amigos do Bem) ou **papel recortado** (a metade de cima
+  animada, como no canal do Raul), com sonoplastia;
 - renderiza e entrega a prévia e a capa.
 
 Ela nasceu no canal de cortes do Raul Sena (@cortesdoraulsena). Cada regra dela veio de um erro que já foi ao ar ou quase
@@ -61,6 +63,7 @@ python scripts/instalar.py --so-conferir
 Abra o Claude Code na pasta do seu projeto de cortes (uma pasta vazia serve; a skill cria `_fontes/`, `_pesquisa/`,
 `cortes/` e `_lixeira/`) e peça em português, por exemplo:
 
+- "faz um reels de vídeo real com esse depoimento: <arquivo ou link>"
 - "faz um corte desse vídeo: https://www.youtube.com/watch?v=…"
 - "quais trechos desse vídeo rendem mais corte?"
 - "faz o roteiro do corte com o trecho de 12:30 a 15:10"
@@ -76,7 +79,8 @@ A skill para em dois pontos para você aprovar: o **roteiro** e a **prévia**. N
 | `SKILL.md` | As regras de ouro e o fluxo de um corte, etapa por etapa. |
 | `references/` | Uma referência por etapa: pesquisa e download, ranqueamento, roteiro, corte e fala, conferências, áudio e animação. |
 | `scripts/` | As ferramentas (download espaçado, corte sem comer palavra, alinhador, legenda, área de segurança, sonoplastia, finalização) e o `instalar.py`. |
-| `assets/modelo/` | O projeto-modelo de um corte: motor de animação, bancos de personagens e desenhos, legenda, capa e post. |
+| `assets/modelo_reels/` | O modelo do Reels de vídeo real: `montar_reels.py`, `reels.json` (manchetes, nomes, coberturas, logo, cores, música) e a capa. |
+| `assets/modelo/` | O modelo do papel recortado: motor de animação, bancos de personagens e desenhos, legenda, capa e post. |
 | `assets/foley/` | Os efeitos sonoros (Kenney, CC0, e os do HyperFrames). |
 
 ## Precisa de internet para

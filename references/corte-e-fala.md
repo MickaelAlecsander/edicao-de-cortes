@@ -45,7 +45,12 @@ python $S/transcrever_local.py ../../_fontes/<id>_opus.mkv ../../_pesquisa/<id>_
     palavra vizinha.
   - No C23, a voz do AAC de 128k soou "vibrada, com cara de estourada".
   - Juntar o vídeo do `.mp4` com o Opus atrasado no mesmo tanto que o AAC, medido por correlação:
-    `ffmpeg -i <id>.mp4 -itsoffset 0.0353 -i <id>_audio.webm -map 0:v -map 1:a -c copy <id>_opus.mkv`.
+    `ffmpeg -i <id>.mp4 -itsoffset <atraso> -i <id>_audio.webm -map 0:v -map 1:a -c copy <id>_opus.mkv`. O atraso muda
+    de fonte para fonte (35,3 ms no C20, 36,3 ms no C86): o `baixar.py opus` mede e junta sozinho.
+  - Antes do roteiro aprovado, o `.mkv` ainda não existe: transcrever o `<id>_audio.webm` e somar o atraso medido.
+- **Trecho embolado sai do roteiro.** Se a transcrição muda a cada leitura ou o ouvido não fecha o texto (C81: os dois
+  modelos ouviam coisas diferentes; C83: o "Cadê, coadibe"), o trecho vai para o "Fica de fora". Sem o texto certo, o
+  alinhador não confere a ponta e a legenda sai errada.
 - **Com fonte AAC, medir o fim no arquivo inteiro.** No C44, ler o AAC com `-ss` antes do `-i` errou ~60 ms e fez
   parecer palavra cortada.
 
@@ -57,7 +62,10 @@ python $S/pausas.py ../../_fontes/<id>_opus.mkv --palavras ../../_pesquisa/<id>_
 
 `t:antes:depois` = o instante aproximado da ponta, a última palavra que fica e a primeira que vem depois. Para cada t,
 o script faz duas coisas:
-1. lista as pausas reais a até 0,8 s (abaixo de −40 dB, 30 ms ou mais);
+1. lista as pausas reais a até 0,8 s (abaixo de −40 dB, 30 ms ou mais). Pausa no meio da frase não é fim de frase (no
+   C01 o "desaparece" veio depois da pausa de "simplesmente…"): antes de fechar um bloco numa pausa, ouvir o que vem
+   depois e conferir que a ideia fechou. Quando a palavra seguinte começa em p, t ou k, a ponta pode ficar na oclusão do
+   1º som DELA, nunca na de um som do meio (C80: no vale do "q" sobrava um "Por-"; o corte foi para a oclusão do "P");
 2. passa o texto da janela pelo alinhador forçado, que diz se cada vale cai ENTRE palavras ou DENTRO de uma.
 
 | Marca | Significado | O que fazer |
@@ -184,17 +192,26 @@ Escrever pelo `cortes_gerar.py`, com o porquê de cada ponta em comentário, nun
 
 ## 5. Enquadramento do Raul
 
-- **Raul INTEIRO, do cabelo ao queixo, em todos os quadros.** No C28, o detector de rosto pegou o boneco da estante e
-  apertou o recorte para 776 px. Usar o recorte largo. Onde o detector erra, fixar à mão: o neon do C48
-  (`[450, 1080, 60]`), a mesa do C40, a TV e o boneco do C49.
+- **Embaixo, sempre que possível, fica o Raul:** o produto é a animação de cima (C25). Na tela dividida entra só a faixa
+  dele; slide, gráfico ou manchete só vão para baixo quando o Raul some da fonte.
+- **A imagem é sempre a do mesmo instante do áudio** (C21: "tá horrível"): nada de `de` (imagem de outro instante) nem
+  `congela` com pessoa. O `cortar.py` ainda aceita os dois campos, mas eles só servem para plano sem gente.
+- **Raul INTEIRO, do cabelo ao queixo, em todos os quadros.** O `cortar.py` usa recorte FIXO por bloco (`[x, largura, y]`
+  no `cortes_gerar.py`; no estúdio dele, `[353, 1215, 0]`, que a janela de 1080 × 960 escala). No C28, um detector
+  automático de rosto pegou o boneco da estante e apertou o recorte para 776 px: por isso o recorte é largo e fixado à mão
+  depois de olhar a folha (o neon do C48 `[450, 1080, 60]`, a mesa do C40, a TV e o boneco do C49). Só o `reenquadrar.py`
+  detecta rosto, e só para short vertical.
 - **Sem zoom, rosto sempre do mesmo tamanho** (C72: "tá ficando colado no rosto dele… não deixa o rosto dele ficar
-  cortado"). Fonte que é short vertical com os zooms do editor passa pelo `reenquadrar.py`:
-  1. rodar o `cortar.py` numa subpasta (`_alto/cortes.json` com `janela [1080, 1920]`, `recorte [0, 1080, 0]`, sem trocas
-     nem `tapar`);
+  cortado"). O proibido é o zoom que VARIA ao longo do vídeo e o rosto colado; uma ampliação fixa para centrar ou para
+  o painel preencher a janela (1,32× no C46, 1,47× no C82) pode. Fonte que é short vertical com os zooms do editor passa pelo `reenquadrar.py`:
+  1. rodar o `cortar.py` numa subpasta (`_alto/cortes.json` com `"janela": [1080, 1920]`, `"recorte": {"w": 1080, "y": 0}`
+     e `"x": [0, 1080, 0]` em cada bloco, sem trocas nem `tapar`); refazer o `_alto/` sempre que o corte mudar;
   2. rodar `python $S/reenquadrar.py . _alto/assets/raul.mp4 --base <linha acima da legenda> --legenda <faixa> --fixo a-b:y`.
 
   Ele afasta a imagem quando o rosto cresce, segue a cabeça e desfoca SÓ a caixa das letras da legenda gravada. As
-  laterais desfocadas existem só aí.
+  laterais desfocadas existem só aí. Depois de um `cortar.py` novo, mover para `_lixeira/` o
+  `raul_antes_reenquadrar.mp4` antes de reenquadrar de novo (senão o script usa o áudio antigo) e rodar o `travada.py`
+  outra vez no fim.
 - **Na tela dividida, o painel do Raul PREENCHE a janela** (C82, zoom de 1,47×). O painel no meio com laterais
   desfocadas foi reprovado: "ele é para ocupar a parte de baixo inteira".
   - Medir onde o painel começa: no C25 era x = 1249, e com 1236 sobrava uma borda preta.
@@ -206,7 +223,10 @@ Escrever pelo `cortes_gerar.py`, com o porquê de cada ponta em comentário, nun
 - **Foto ou gráfico em tela inteira (o Raul some) vai para debaixo de uma TELA CHEIA da animação.** No C84, a foto do
   Saverin entra em 485,25 (e a da Saveiro, por cima, em 480,75). Nunca o último quadro congelado: revogado em 10/10,
   depois do C25.
-  - Manchete ou gráfico que precisa aparecer inteiro vai `"cheio"` (C20, C61).
+  - Modo `"cheio"` no lugar da tela cheia: só quando a manchete ou o gráfico da fonte PRECISA ser lido inteiro e a
+    animação não o substitui (C20, C61). No resto, a tela cheia da animação cobre a foto ou o gráfico.
+- **Flash ou transição gráfica da própria fonte** se cobre com uma passagem de papel da animação ou com a tela cheia,
+  nunca com quadro congelado (o `travada.py` barra).
   - No C52 e no C55, o recorte de 1215 cortava a manchete do terço de baixo; o plano inteiro foi `"cheio"`.
 - **Desfocar texto ou overlay do canal dele** (C84: "Deixe o like na CONFIANÇA", de 8,9 a 13,0 s), depois do `cortar.py`,
   nos pixels e tempos da montagem: `python $S/borrar_regiao.py assets/raul.mp4 --regiao 0,670,520,220,8.8,13.0`.
@@ -234,14 +254,17 @@ Escrever pelo `cortes_gerar.py`, com o porquê de cada ponta em comentário, nun
 - **Pergunta no começo só quando a resposta não se entende sem ela** (C68; a do Nordeste, no C51, era indispensável).
 - **Marcar no roteiro a fala que não é do Raul** (C27: o fecho "não tem político que pode indicar" era do apresentador).
 
-**Quem fala, sem API (método manual):**
+**Quem fala, sem API (método manual). Obrigatório em todo corte com 2 pessoas ou mais**, logo depois do `cortar.py` e
+antes da legenda:
 1. Fazer a folha do trecho da fonte a cada 2 a 4 s (`folha_contato.py --de --ate --cada 2`): quem está na tela, de quem a
    boca mexe.
 2. Ouvir cada troca de voz: o Whisper local dá o texto, o ouvido diz a voz, e a altura ajuda (o Raul fica em
    130–200 Hz). A boca decide: no C49, o "Acho que para o Brasil" que a diarização deu ao apresentador era do Raul.
-3. Escrever `assets/quem_fala.json` à mão, no tempo da montagem:
-   `[{"quem": "apresentador", "s": 12.4, "e": 14.1, "texto": "…"}]`. O `legendas.py` ignora trecho de menos de 0,4 s e
-   põe o outro no cartão escuro. O `"quem"` gravado na palavra pelo `pos_cortar.py` vale mais.
+3. Marcar no `pos_cortar.py`, no `OUTRO`, as palavras de quem não é o Raul: elas ganham `"quem": "apresentador"` e vão
+   para o cartão escuro da legenda. É o caminho que vale: o `pos_cortar.py` grava `"quem"` em TODA palavra, e o
+   `assets/quem_fala.json` (`[{"quem": "apresentador", "s": 12.4, "e": 14.1}]`) só é lido para palavra sem `"quem"`.
+   Qualquer voz que não é a do Raul (apresentador, convidado, aluno) leva o rótulo `"apresentador"`, o único que vai
+   para o cartão escuro; com dois convidados (C87), os dois entram assim.
 4. Nunca usar as marcas `>>` da legenda do YouTube: no C27, elas inverteram os trechos. A diarização também troca rótulos
    em trecho longo (C41), então toda separação se confere na imagem.
 
@@ -396,3 +419,8 @@ do C37, do C38 e do C42 (0,5 a 0,7 s) foram ao ar e pareceram vídeo travado, o 
 - [ ] Trocas no quadro exato; fotos em tela inteira anotadas para as telas cheias.
 - [ ] `travada.py` passou; a legenda vai do 1º ao último quadro, com palavrão censurado.
 - [ ] A lista do que saiu por falta de pausa limpa, para contar junto da prévia.
+
+**A ✋2 (aprovação do corte, quando o dono pede para ver antes da animação):** montar com o `montar.py` do modelo e um
+`_cenas.js` só com o `camera([...])` (o Raul embaixo, a folha vazia em cima, a legenda e a marca), renderizar em
+`renders/etapa2.mp4` e mandar com a lista do que saiu por falta de pausa limpa. Depois, PARAR. Quando o dono libera
+seguir sem esperar ("depois daí já pode ir para a animação"), a etapa 2 vai para ele do mesmo jeito, em paralelo.

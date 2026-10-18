@@ -1,0 +1,18 @@
+{
+ "titulo_do_video": "Exemplo: troque tudo abaixo pelo do seu vídeo",
+ "logo": {"arquivo": "", "canto": "esquerda", "tamanho": 120},
+ "cores": {
+  "cartao": "#ffffff", "texto": "#1e1b2e", "marca_texto": "#f5a623", "destaque": "#e5432d",
+  "manchete_fundo": "#f5a623", "manchete_texto": "#1e1b2e", "nome_fundo": "#1e1b2e", "nome_texto": "#ffffff"
+ },
+ "legenda_y": 1270,
+ "manchetes": [
+  {"texto": "O GANCHO EM\nPOUCAS PALAVRAS", "de": 0.2, "ate": ["fortunas", "gancho", 1, 0.0], "y": 300}
+ ],
+ "nomes": [
+  {"nome": "Nome de quem fala", "funcao": "o que essa pessoa faz", "de": ["acordar", "gancho", 1, 0.0], "ate": ["verdade", "gancho", 1, 0.3]}
+ ],
+ "coberturas": [],
+ "musica": {"arquivo": "", "volume": 0.07},
+ "som": true
+}

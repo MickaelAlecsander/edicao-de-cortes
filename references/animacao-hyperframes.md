@@ -63,7 +63,10 @@ O que o `montar.py` muda no motor, e por quê:
   "0 errors" (C39: `const cai` já existia no motor; C59: `ST` também).
 
 **Não redeclarar nomes do motor nem dos bancos:** `cai`, `ST`, `cam`, `cena`, `obj`, `pessoa`, `moeda`, `documento`,
-`cartao`, `chama`, `casinha`, `congresso`, `B`, `T`, `W`, `D`, `C`, `DUR`. O `montar.py` acusa no `node --check`.
+`cartao`, `chama`, `casinha`, `congresso`, `B`, `T`, `W`, `D`, `C`, `DUR`. O `_base.js` do modelo também já declara `pe`,
+`cresce`, `cartaoP`, `raulF`, `flutua`, `pulinho`, `nega`, `olha`, `aceno`, `suorP`, `brilhos`, `cedulasVoam`, `curte`,
+`estrelaN`, `vistoA`, `telaCheia`, `camera`, `JAN`, `CHEIAS` e `raiz`: cena copiada de corte antigo que declara algum deles
+(o C87 declarava `cresce` e `JAN`) quebra. O `montar.py` acusa no `node --check`; apagar a declaração e usar a do `_base.js`.
 
 **Câmera e cenas:**
 - A câmera fica sempre em zoom 1 e na mesma altura. Com ela em 1,0, o ponto (x, y) de uma cena cai na tela em
@@ -81,6 +84,9 @@ O que o `montar.py` muda no motor, e por quê:
   Sem ele a câmera fica fora do lugar e nada ferve; o `montar.py` para se não o achar.
 - **Objeto que sai andando** vai para longe (+1000) e leva `tl.set(el, { autoAlpha: 0 }, t)` logo depois. Por quê: o
   mundo é um só, e ele aparecia na borda da cena vizinha (C27, C41).
+- **Objeto de ação** (a tesoura que corta, a moeda que voa, a mão que bate) faz a ação INTEIRA e some logo depois, com
+  `tl.to(el, { autoAlpha: 0, duration: 0.15 }, fim)`. No C87 a tesoura ficava parada na cena depois do corte; no C86 a mão
+  do tapa parava antes do rosto: o contato tem de acontecer.
 - A aba de capítulo (`capitulo(num, titulo, t0, t1)`, no HUD a partir de y 150) ainda existe; `TOTAL` fica no
   `_ajudantes.js`.
 
@@ -101,8 +107,10 @@ Todo tempo vem de `T(palavra, bloco, n)`; `B[bloco]` é o início do bloco e `DU
   não vale (C48). O texto é centrado em `w`; se passar de `w`, ele vaza para a direita a partir de x (C27).
 - `selo(c, id, x, y, w, txt, fs, cls = "selo")` + `carimba(el, t, rot, big = 1)`: o carimbo de borda dupla com
   estrelas (`"selo seloa"` = azul). Ele bate no papel em t + 0,06, treme a folha e solta papel picado. O selo tem
-  z-index 5: o que vai por cima dele (o ✗) precisa de 6. No máximo 3 carimbos por vídeo, e nunca dois lado a lado:
-  "NÃO SÃO" + "O PROBLEMA" virou frase (C09).
+  z-index 5: o que vai por cima dele (o ✗) precisa de 6. Carimbo só nos SOCOS do raciocínio (o C84 teve 5 e o C87, 6;
+  carimbo em toda frase vira ruído), e nunca dois lado a lado: "NÃO SÃO" + "O PROBLEMA" virou frase (C09). **O carimbo
+  final pousa a 1 s ou mais do fim do vídeo**, para dar tempo de ler (no C87 ele saía a 0,4 s do fim e foi para o 2º
+  "construiu", a 1,5 s do fim).
   ```js
   const mv0 = selo(c0, "mv0", 420, 60, 560, "MEIA VERDADE", 46);
   carimba(mv0, T("meia", GA) - 0.05, -4, 1);
@@ -191,9 +199,17 @@ faltava na cena a cena era vida dentro da cena.
   cabelo ao copiar personagem de corte antigo.
 - **Não afirmar além da fala:** fonte no condicional pede etiqueta no condicional (C58: TERIA PAGO, SUPOSTO). Figura
   genérica de instituição (O ESTADO, O BANQUEIRO) sem partido (C74). Etiqueta e carimbo nunca com palavrão por extenso.
+- **Detalhe errado na fala (data, prazo, valor) que não sai sem quebrar o raciocínio: a animação mostra o dado certo,
+  sem desmentir o Raul.** No C87 ele ligou o fim do réis ao fim do império e pôs o confisco "30 anos atrás"; a tela cheia
+  mostrou 1822 → 1942, MARÇO DE 1990, BLOQUEADO POR 18 MESES e DEVOLVIDO EM 12 PARCELAS. Fato errado que é a própria tese
+  continua saindo do roteiro (C51).
+- **Trecho sensível** (violência, morte, doença): a animação só sugere, sem mostrar a cena e sem gag (C86: a violência
+  doméstica da fala ficou só sugerida). No som, só caneta baixa.
 - **O gancho nunca abre vazio, e nenhuma cena também:** o 1º elemento de cada cena entra com a 1ª palavra do bloco. Por
   quê: no C44 o trabalhador só entrava no "trabalhador" e o bloco abriu com 1,5 s de papel em branco. Nenhum trecho de
-  folha vazia passa de ~2 s (C18).
+  folha vazia passa de ~2 s (C18). **Personagem com lugar reservado na cena entra na 1ª menção dele ou na 1ª palavra do
+  bloco**, nunca numa palavra tardia: até ele brotar, o espaço fica vazio e a cena parece incompleta (C87: o avô passou a
+  entrar no 1º "versão", e não no "velhos").
 - **No gancho, a cena pode trazer palavras-chave** (a placa, o balão, o carimbo), mas só como complemento: a legenda fica
   do começo ao fim. Por quê: no C49 a faixa sumiu e a fala virou texto espalhado, que não se lia em ordem (11/10).
 - **Etiqueta com até 4 palavras**, para ler no celular.
@@ -222,6 +238,15 @@ Padrão desde 16/10: a animação toma a tela inteira, por cima do Raul, e a voz
   t0 − 0,5 (0,52 s, girando 1,4° → 0), desce em t1 (0,46 s) e some; a legenda fica por cima (z 25 > 20) e a marca do
   canal some enquanto ela está na tela. O que é criado depois do `telaCheia(n)` ferve no grupo `cenaAtual` 49 + n (50,
   51…) até o próximo `cena()`; para voltar a pôr peça numa cena, `cenaAtual = i`.
+- **Nenhum carimbo ou soco no meio segundo em que a folha sobe** (de t0 − 0,5 a t0): ela cobre a folha de cima nesse
+  tempo. Dar folga para o carimbo do gancho pousar e ser lido antes de t0 − 0,5; se não couber, empurrar o t0 (no C87 o
+  "CORTOU O ZERO" sumia debaixo da subida, e a tela 1 passou a subir 0,3 s depois do "Desde"). Fotografar o instante
+  t0 − 0,5 de cada tela cheia.
+- **Cada fala dita com a tela cheia em cima ganha uma peça entrando:** ela nunca fica segundos só com o título. No C87
+  as telas 2 e 3 ficavam vazias, e entraram PLANO COLLOR, a multidão com o dinheiro indo para o cofre, NÃO FOI BEM
+  ASSIM… e EU NÃO TAVA VIVO.
+- **A faixa do título fica livre** (de y 175 até o pé da etiqueta): objeto empilhado em outro (o cadeado sobre o cofre,
+  no C87) começa abaixo dela, contando a entrada com `scale` ou `y` negativo.
 - **A câmera troca de cena atrás dela:** a parada vai em t1 − 0,3 (`camera([[1, f1b - 0.3]])`), para a cena nova já
   estar lá quando a folha descer.
 - **O par de som:** subida = whoosh + página; descida = whoosh, discretos, por baixo da fala. O `gera_som.py` do modelo
@@ -256,8 +281,8 @@ entrou.
 
 - **Movimento fluido, sem degraus.** O `S()` do motor devolve a curva inteira, a 24 quadros; o `andaP` é contínuo.
   Nada de `Math.floor(q * n) / n` nas cenas, e trocas de bloco suaves. Por quê: "por mais que ela aconteça em blocos, as
-  coisas têm que acontecer de uma maneira fluida… natural" (10/10). O `LINHA.md` antigo fala em stop-motion de 12 qps:
-  vale o fluido. Usar os 12 princípios (antecipação, comprimir e esticar, arcos, entrar e sair devagar) e reação na
+  coisas têm que acontecer de uma maneira fluida… natural" (10/10). A versão antiga da linha do canal falava em stop-motion de 12 qps:
+  vale o fluido (o comentário antigo do `motor.html` sobre degraus também). Usar os 12 princípios (antecipação, comprimir e esticar, arcos, entrar e sair devagar) e reação na
   palavra (13/10).
 - **O grão do papel fica parado.** O motor não anima o `#grao`. Por quê: o grão que pulava a cada 2 quadros era ruído
   novo em todo quadro; no C45 o vídeo caiu de 250 MB para 72 MB parado, com a mesma qualidade, e no TikTok esse ruído
@@ -283,7 +308,8 @@ entrou.
 
 ## 9. A capa
 
-Um quadro do próprio vídeo, com o Raul olhando para a câmera de olhos abertos, a folha de papel com uma cena da animação
+Um quadro do próprio vídeo, com o Raul olhando para a câmera de olhos abertos e o rosto livre (nenhuma mão na frente; no
+C86 o quadro de 3,9 s tinha as mãos no rosto e a capa foi para o de 30 s), a folha de papel com uma cena da animação
 e a manchete em etiquetas de papel (Archivo Black, palavra-chave na etiqueta vermelha). O modelo é o `capa/index.html`.
 
 - **Manchete de 2 a 3 linhas, a mesma ideia do gancho**, de y 250 a ~600. Por quê: o rosto inteiro do Raul precisa
@@ -293,7 +319,7 @@ e a manchete em etiquetas de papel (Archivo Black, palavra-chave na etiqueta ver
 - **Capa não acusa:** "ROUBOU?" parado ao lado do rosto lê-se como acusação (C37).
 - **A capa segue o estilo do vídeo** (13/10): no papel recortado, etiqueta branca e vermelha.
 - **Montar:** `capa/assets/raul.jpg` é um quadro do `raul.mp4` (1080×960); `capa/assets/mundo.png` é um pedaço da
-  animação, tirado com `snapshot --zoom x,y,600,317 --zoom-scale 1` (coordenada da tela); papel e grão o `montar.py`
+  animação, tirado com `snapshot --zoom x,y,600,317 --zoom-scale 1 --describe false` (coordenada da tela); papel e grão o `montar.py`
   copia. Depois, `npx --yes hyperframes@0.8.99 snapshot capa --at 0.5 --no-end --describe false -o _capa` e o PNG vira
   `renders/cNN_capa.jpg`. Conferir o recorte 3:4: o rosto do Raul inteiro e a manchete inteira dentro dele.
 
@@ -302,11 +328,13 @@ e a manchete em etiquetas de papel (Archivo Black, palavra-chave na etiqueta ver
 1. **Esforço:** as etapas até a animação rodam com esforço médio. Antes de animar, parar e pedir o esforço extra. Por
    quê: a animação do C01 só chegou ao nível dela com muitas rodadas de conferência quadro a quadro (01/10). Com prazo
    curto ("faz completo"), avisar em uma linha e seguir (04/10).
-2. **Observar o vídeo:** quadros nos momentos-chave (os gestos e as expressões do Raul, para sincronizar), quem fala e o
+2. **Observar o vídeo:** rodar `python $S/roteirista.py batidas .` (grava o `batidas.md`: cada frase com o tempo, os
+   gatilhos já com a âncora `T("palavra", "bloco", n)` certa e as alusões sem nome, como "ele" e "o presidente", que
+   pedem a pessoa ilustrada com etiqueta); quadros nos momentos-chave (os gestos e as expressões do Raul, para sincronizar), quem fala e o
    texto com o tempo de cada palavra.
 3. **Escrever o roteiro da animação ANTES de animar** (`ROTEIRO_ANIMACAO.md`): o fio da história (personagem ou objeto que
    atravessa o vídeo), os personagens (quem é, o que significa, o que muda), cena por cena ("tempo · o que se ouve → o
-   que se vê"), as telas cheias com início, fim e o que aparece, no máximo 3 carimbos e o final em loop. Por quê: "antes
+   que se vê"), as telas cheias com início, fim e o que aparece, carimbo só nos socos e o final em loop. Por quê: "antes
    de animar vai acontecer o processo de criação de roteiro… essa parte do roteiro é muuuuito importante" (06/10, C27).
    Autocrítica com nota de 0 a 10, em rodadas, até 10/10:
    - gancho (ironia ou fato visível em 2 s);

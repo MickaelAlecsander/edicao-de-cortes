@@ -751,6 +751,9 @@ def mixar(pasta):
     lv = curto(vm)
     vref = np.percentile(lv[lv > -60], 95) if (lv > -60).any() else -20.0   # voz muda (o modelo de teste): referência padrão
     deixas = expandir(folha["deixas"], palavras)
+    errados = sorted({c["som"] for c in deixas} - set(SONS))
+    if errados:   # C87: um nome fora do catálogo parava a mixagem no meio com KeyError
+        raise SystemExit("⛔ som que não existe no som.json: %s. Nomes válidos: %s" % (", ".join(errados), ", ".join(sorted(SONS))))
 
     camadas = {k: np.zeros((n, 2)) for k in CAMADA}
     for c in deixas:

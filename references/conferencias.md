@@ -224,9 +224,17 @@ completos de cada script estão no `--help` dele.
     `clip-path` da `.cena`);
   - o gancho não tem tela vazia, o 1º elemento de cada cena entra junto com a 1ª palavra do bloco, e nenhum trecho de
     folha vazia passa de ~2 s;
-  - o 1º quadro não está vazio.
-- [ ] **Âncoras das palavras certas.** Toda `T(palavra, bloco, n)` com palavra curta ou comum ("com", "e", "vai", "Aí")
-  tem o `n` contado no `tempos.json`, contra a repetição no bloco inteiro.
+  - o 1º quadro não está vazio;
+  - objeto de ação (tesoura, moeda, mão) some depois da ação, e o contato acontece (C86, C87);
+  - nada cobre o título da tela cheia, a cabeça de um personagem ou outra palavra; nada fica escondido atrás de um balão
+    (C86); ✗ e ✓ não batem nas palavras (C85: o ✗ foi para x 940);
+  - nenhum carimbo cai entre t0 − 0,5 e t0 de uma tela cheia (fotografar esse instante);
+  - cada tela cheia tem peça nova em cada fala, do t0 ao t1 (C87);
+  - o carimbo final pousa a 1 s ou mais do fim (fotografar o último segundo).
+- [ ] **Âncoras das palavras certas.** TODA `T(palavra, bloco, n)` tem o `n` contado no `tempos.json` (o `batidas.md` do
+  `roteirista.py` já traz o n certo). Não só as curtas ("com", "e", "vai", "Aí"): palavra de conteúdo também se repete no
+  bloco ("história" e "construiu" no C87), e com o n errado o elemento entra segundos antes da fala, às vezes escondido
+  atrás de uma tela cheia.
   - O `W()` acha a palavra dentro de outras frases: o "Aí" pegou o "E aí" no C39.
   - Em bloco longo, o `sai()` pode cair antes do `entra()` e deixar a etiqueta para sempre na tela (C41).
   - A deixa de câmera vai em palavra rara.
@@ -340,4 +348,10 @@ A prévia é a aprovação da animação e do som e, sem pedido de mudança, a d
   do canal pediu para tirar: "quero ver o vídeo antes de agendar". Também vale:
   - "faz completo" autoriza produzir até o fim, não publicar;
   - vídeo refeito com mudança visível volta para a aprovação;
-  - quando a resposta não deixa claro se é agora ou no horário combinado, perguntar em uma linha antes de rodar.
+  - quando a resposta não deixa claro se é agora ou no horário combinado, perguntar em uma linha antes de rodar;
+  - o pedido que já diz "agendado" ("quero pronto, tudo perfeito, agendado", C85 a C87) vale como o "pode agendar"
+    daqueles vídeos; "faz completo" sem "agendado" não vale;
+  - "subir público" é publicar AGORA (no C17 o agendamento das 21h foi desfeito); "pode postar" perto do horário foi
+    "agendar no horário";
+  - reagendar ou remarcar um vídeo já aprovado, a pedido do dono, não pede nova prévia;
+  - um "pode agendar" vale para as três redes no mesmo horário, sem aprovar de novo em cada uma.

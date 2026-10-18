@@ -21,7 +21,7 @@ Só há duas compressões com perda: a da fonte (o Opus) e a do `finalizar.py`. 
   cada perda soar como estouro.
 - [ ] **Juntar o vídeo do `.mp4` com o Opus num `.mkv`, sem recomprimir, e cortar desse `.mkv`:**
   ```bash
-  ffmpeg -i <id>.mp4 -itsoffset 0.0353 -i <id>_audio.webm -map 0:v -map 1:a -c copy <id>_opus.mkv
+  ffmpeg -i <id>.mp4 -itsoffset <atraso medido> -i <id>_audio.webm -map 0:v -map 1:a -c copy <id>_opus.mkv
   ```
   Os 35,3 ms são o atraso do AAC do `.mp4` em relação ao `.webm` nos vídeos do Raul. Conferir por correlação em cada fonte
   (no C23 sobrou 0,3 ms). Vídeo do DASH, só imagem, começa em 0 junto com o Opus: sem atraso (C68).
@@ -141,8 +141,14 @@ O `db` da deixa soma sobre a camada. No C84, os miúdos foram de −2 a −6 e a
     `papelao`, `medalha`, `dun`;
   - síntese: `boing`, `pulo`, `catraca`, `bip`, `bip_erro`, `motor`, `vapor`, `pluck`, `apito`, `globo`, `caneta`
     (`args: {"larga": true}` = marca-texto), `tremor`;
-  - gravado simples: cada grupo do `GRUPO` no script (`pagina`, `pousa`, `desliza`, `whoosh`, `pop`, `tique`, `madeira`,
-    `metal_leve`, `vidro`, `passo`, `tecla`, `gota`, `brilho`, `notificacao`, `grave` e outros).
+  - gravado simples: `pagina` (a página virando), `pousa`, `desliza`, `empurra`, `amasso`, `livro`, `porta_abre`,
+    `porta_fecha`, `faca`, `rangido`, `tecido`, `trava`, `panela`, `madeira`, `madeira_media`, `madeira_forte`,
+    `metal_leve`, `metal_medio`, `vidro`, `passo`, `passo_leve`, `tique`, `clique`, `tecla`, `chave`, `rolagem`, `risco`,
+    `pergunta`, `gota`, `cristal`, `some`, `surge`, `pop`, `whoosh`, `notificacao`, `brilho`, `sininho`, `macio`, `prato`,
+    `moedas_mao`, `pedra`, `grave`.
+- **O campo `som` aceita SÓ os nomes do banco acima.** Os grupos internos do `GRUPO` no script não são sons: `folhear`
+  existe só como `pagina`, e `ficha`, `couro`, `metal_pesado`, `soco_forte`, `macio_forte` e `sino` não existem. No C87, um
+  `folhear` parou a mixagem; agora o `sonoplastia.py` confere a folha antes de mixar e lista os nomes errados.
 - **Ouvir antes de escolher:** `python $S/sonoplastia.py --catalogo <pasta>` grava um `.wav` de cada som.
 - **Caderno:** `caneta` (`larga` no marca-texto) em toda escrita e todo traço. **Trecho sensível** (morte, doença): só
   caneta baixa, sem gag.
@@ -205,14 +211,16 @@ fala" (pedido de 15/10). O padrão do C82 ao C84:
 | 0,1 s depois | `pagina` | `transicao`, −1 |
 | a folha começa a descer (`t1`; 0,46 s, `power2.in`) | `whoosh` | `transicao`, 0 |
 
-- [ ] **Ancorar o par na MESMA conta do `telaCheia(n, t0, t1)` e do `assets/tela_cheia.json`.** No C84,
-  `t0 = T("gente", gancho, 2) − 0,05`: o whoosh vai em `"gente"` com `n=2` e −0,55; a página em −0,45.
+- [ ] **Com o `gera_som.py` do modelo, o par de cada tela cheia sai sozinho** do `assets/tela_cheia.json`: não escrever o
+  par à mão, senão ele sai dobrado. Quando o corte muda, rodar o `montar.py` antes do `gera_som.py`. Escrevendo à mão
+  (cortes antigos), ancorar na MESMA conta do `telaCheia(n, t0, t1)`: no C84, `t0 = T("gente", gancho, 2) − 0,05`, o
+  whoosh em `"gente"` com `n=2` e −0,55, a página em −0,45.
 - [ ] **Tela cheia sem o par está incompleta**, e par fora do quadro da folha soa como erro.
 
 ## 7. Escrever as deixas no `gera_som.py`
 
 Folha escrita à mão, com números, quebra no primeiro corte refeito. O `gera_som.py` do corte (modelo:
-`cortes/c84-fortunas/gera_som.py`) gera o `som.json` a partir das MESMAS palavras da cena.
+`assets/modelo/gera_som.py`) gera o `som.json` a partir das MESMAS palavras da cena.
 
 - [ ] **A mesma âncora da cena.** A cena faz `carimba(el, T("herdou", SO) - 0.05)`; a deixa é
   `d("carimbo HERDOU", "herdou", SO, CARIMBO, "carimbo", "destaque")`. O `T(w, bloco, n)` conta a n-ésima ocorrência

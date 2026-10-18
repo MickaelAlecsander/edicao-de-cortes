@@ -60,11 +60,11 @@ for (let t = 0; t <= dur; t += PASSO) {
     // a folha da tela cheia cobrindo tudo: a folha de cima não aparece
     const cheias = [...document.querySelectorAll(".cheia")].filter((f) => vis(f) > 0.1);
     const cobre = cheias.some((f) => f.getBoundingClientRect().top < 8);
-    const pecas = [...document.querySelectorAll("#mundo [id], .cheia-dentro [id]")]
+    const pecas = [...document.querySelectorAll("#mundo [id], .cheia-dentro [id], .reels [id]")]
       .filter((e) => !FUNDO.has(e.id) && !("fundo" in e.dataset) && !e.querySelector("[id]") && !/^(cena|c)\d+$/.test(e.id) && !/^pz\d+_/.test(e.id));   // pz = os papeizinhos que voam do carimbo (não são informação)
     const out = [];
     for (const e of pecas) {
-      const naCheia = !!e.closest(".cheia");
+      const naCheia = !!e.closest(".cheia, .reels");   // o reels de vídeo real usa a zona da tela cheia
       if (!naCheia && cobre) continue;
       if (vis(e) < 0.15) continue;
       // o que desenha: as formas do SVG (fora de defs/clipPath/máscara) e, nos rótulos de HTML, o <span> (a caixa do div

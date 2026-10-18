@@ -30,7 +30,7 @@ B = [
     # ("lemann2", [564.675, 564.740], [575.140, 575.220], F, {"respiro": 0.15, "fala_ok": {"ini": "a voz antes do corte é o fim de 'Saverin.'; vale de −62 dB"}}),
 ]
 blocos = [{"id": bid, "ini": ini, "fim": fim, "x": x, **extra} for bid, ini, fim, x, extra in B]
-DESTAQUES = []   # palavras que a legenda pinta com o marca-texto (números, nomes, o soco de cada frase)
+DESTAQUES = []   # palavras que a legenda pinta de VERMELHO (números, nomes, o soco de cada frase); o marca-texto amarelo vai em toda palavra dita
 cfg = {"fonte": FONTE, "palavras": PAL, "janela": [JW, JH], "correcoes": {}, "destaques": DESTAQUES,
        "recorte": {"w": 1215, "y": 0}, "blocos": blocos}
 json.dump(cfg, open("cortes.json", "w", encoding="utf-8"), ensure_ascii=False, indent=1)

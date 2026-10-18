@@ -54,7 +54,10 @@ Um trecho só vira corte quando passa nos quatro testes:
 
 **As regras:**
 1. **A unidade é o RACIOCÍNIO.** Um raciocínio tem: o que é (a proposta, o fato) → o que o Raul acha → por quê → o que
-   isso causa. Ele entra INTEIRO. Dentro dele só sai o que não muda o sentido: muleta, repetição, piada lateral, palavrão.
+   isso causa. Ele entra INTEIRO. Dentro dele só sai o que não muda o sentido: muleta, repetição, piada lateral, palavrão,
+   gaguejo, autocorreção e frase que o Raul começa e não termina (C80: o "Tem esse... eu..." antes do "Esses dias" saiu).
+   Cada saída vira uma emenda nova, medida no `pausas.py`. Bloco reordenado que abre outro capítulo pede ~0,4 s de
+   silêncio na emenda (C22), tirado da pausa da própria fonte.
    Nunca a premissa nem a conclusão.
 2. **Poucos temas, cada um fechado.** Em 2 minutos cabem 3 ou 4 raciocínios de 15 a 40 s. Cortar um tema inteiro é melhor
    do que deixar três pela metade.
@@ -155,18 +158,22 @@ Padrão desde 16/10: a animação toma a TELA INTEIRA (o Raul some, a voz contin
 - **Risco:** o que pode derrubar e o que foi feito: política na janela errada, palavrão, fato contestado, fala datada,
   apresentador demais, duração, emenda sem pausa.
 - **Capa:** manchete de 2 a 3 linhas com a mesma ideia do gancho, o Raul de olhos abertos e sem selo de nome; ela não acusa
-  (seção 10) e muda quando o gancho muda (seção 5).
+  (seção 10) e muda quando o gancho muda (seção 5). Corte de série leva capa no mesmo molde (C17 e C18: "COMO FICA A
+  ECONOMIA / SE O <NOME> / GANHAR?").
 
 ## 10. Tom, política, janelas do canal e palavrão
 
 **O tom é a economia do PAÍS:** governo, Estado, imposto, mercado, eleição e o que isso causa no povo. Por quê: em 05/10 o C22
 (dicas de consumo) saiu da noite ("pra tentar manter nosso tom"); os de país foram de 100 mil a milhões (C17: 3,8 mi), os de
-dica de bolso ficaram entre 6 e 19 mil. Dica de bolso só em horário leve, de vez em quando (números em `ranqueamento.md`).
+dica de bolso ficaram entre 6 e 19 mil. Dica de bolso só no horário leve, o almoço (12h), de vez em quando; nunca às 19h (números em `ranqueamento.md`).
 
 **Política entra como opinião e análise** (04/10, 1º turno: "nada do que postamos é propaganda, é opinião e análise"). A lei
 proíbe propaganda nova no dia da votação; a opinião é livre, com dois limites: ofensa à honra e fato sabidamente falso. A
 decisão de risco é do dono do canal: informar uma vez, com fonte, e executar.
 - [ ] Sem pedido de voto; os candidatos por igual, ou é a análise do Raul (C09, C13 a C16).
+- [ ] Os dois lados apanham, e o fecho não favorece ninguém. No C85: a Dilma e a MP da conta de luz, o Bolsonaro e o teto, o
+  Lula de hoje e, no fecho, o próprio mercado. Sai a frase que soa como aposta ou elogio a um candidato, mesmo vinda do Raul
+  ("o Flávio tem boas chances de entregar um bom governo").
 - [ ] Sem ofensa e sem piada sobre escândalo: saíram o "esse velho de novo" (C50), o xingamento direto (C39) e a palavra que
   pode ser mal interpretada, o "Chupetinha" (C37).
 - [ ] Nada que soe como desculpa para o lado errado (a creolina, C40) e nada de região contra região (C51).
@@ -176,14 +183,16 @@ decisão de risco é do dono do canal: informar uma vez, com fonte, e executar.
 - [ ] Nunca impulsionar post político. Perto do resultado, o menos partidário (sem "se fulano ganhar").
 - [ ] Opinião do Raul sobre terceiros fora do tema sai (C84: a crítica ao family office do Safra).
 
-**As janelas que o canal adotou** (confirmar com o dono do canal qual vale hoje):
+**Janelas do momento.** Janela é uma regra temporária: tem motivo, evidência e data de fim, e o pedido do dia vale mais que
+ela. Antes de propor, perguntar ao dono qual janela vale hoje; quando uma vencer, perguntar se continua. As do canal do Raul,
+como exemplo:
 - **Outubro de 2026, até o 2º turno (25/10): política e Brasil;** casa, investimento e consumo esperam (08/10). Por quê:
   política e Estado × povo passaram de 100 mil quase sempre; casa, investimento e consumo ficaram entre 8 e 107 mil. O C34
   (investimento) saiu da agenda, e o "caminho e ordem… investir" saiu do fim do C84. Depois de 25/10, perguntar.
 - **O pedido do dia vale mais que a regra de fundo** (13/10: ele mesmo pediu um dia de vídeos de bolso).
-- **Pausa de política de 14 a 18/10 (teste do RPM):** saem nomes de candidatos, partidos, "esquerda/direita", votações e
-  recados a candidatos; fica a crítica aos políticos em geral (C82: "isso não gera voto"). No C84, o "pessoal mais de esquerda
-  dos bancos" saiu por isso. Depois, comparar o US$ por mil com o de 09 a 12/10 e perguntar se a pausa continua.
+- **Pausa de política de 14 a 18/10 (teste do RPM), encerrada em 17/10 ("pode ter política sim"):** enquanto valeu, saíam
+  nomes de candidatos, partidos, "esquerda/direita", votações e recados a candidatos, e ficava a crítica aos políticos em
+  geral (C82: "isso não gera voto"; no C84, o "pessoal mais de esquerda dos bancos" saiu por isso).
 
 **Palavrão:** o áudio pode ter; o texto nunca. Legenda, legenda do post, etiqueta, carimbo e capa levam a 1ª letra,
 asteriscos e a última: F**A, P***A, M***A, C*****O, P*U, F**A-SE (parte no hífen). Por quê (C27): palavrão por extenso faz o
@@ -191,11 +200,16 @@ TikTok restringir o alcance. Palavrão que só serve de muleta pode sair do raci
 
 ## 11. Fatos e atribuição
 
-- **Conferir o número e o fato que o Raul afirma.** Fato errado sai, mesmo forte (no C51 saiu "o PIB de vários estados do
-  Nordeste é maior que o de Goiás": só a Bahia passa).
+- **Conferir o número e o fato que o Raul afirma.** Fato errado que é a TESE do bloco sai, mesmo forte (no C51 saiu "o PIB
+  de vários estados do Nordeste é maior que o de Goiás": só a Bahia passa).
+- **Detalhe errado num raciocínio que vale (data, prazo, número de apoio) fica na fala, e a animação mostra o certo sem
+  desmentir o Raul.** No C87 ele diz "30 anos atrás" e "o réis… cento e poucos anos": a tela mostra PLANO COLLOR, MARÇO DE
+  1990, BLOQUEADO POR 18 MESES, DEVOLVIDO EM 12 PARCELAS e 1822 → 1942. O roteiro lista esses casos em "Fatos que a animação
+  acerta sem desmentir o Raul".
 - **Fato contestado vai no risco** (no "não tem mais gasolina no Brasil", a ANP contesta o dano ao motor).
 - **Fala datada leva a data na tela ou sai** (C36: a etiqueta DITO EM ABRIL); uma Selic citada perde nota na régua.
-- **Sem afirmar além da fala:** a animação e a capa não dizem o que o Raul não disse.
+- **Sem afirmar além da fala:** a animação e a capa não acrescentam opinião nem acusação que o Raul não fez; corrigir um dado
+  (item acima) pode.
 
 ## 12. Quem fala (podcast e mesa)
 
@@ -260,9 +274,18 @@ gasta ~7 s, mas não dá para cortar limpo ali"
 
 ## 16. O formato da entrega (modelo: C84, aprovado em 17/10)
 
-O C84 ("Herança, sorte ou trabalho?", 2:04, 4 telas cheias) é o modelo: cabeçalho (fonte, duração, linha da história);
-um título por bloco com o tempo; o texto completo em citação; a cena e as telas cheias embaixo; a capa; alternativas, por que
-compartilha e risco (seção 9); a autocrítica com nota; e o "Fica de fora" no fim.
+O C84 ("Herança, sorte ou trabalho?", 2:04, 4 telas cheias) é o modelo do roteiro que vai para APROVAÇÃO: cabeçalho
+(fonte, duração, linha da história); um título por bloco com o tempo; o texto completo em citação; a cena e as telas cheias
+embaixo; a capa; alternativas, por que compartilha e risco (seção 9); a autocrítica com nota; e o "Fica de fora" no fim.
+
+**O `ROTEIRO.md` que fica na pasta do corte** (modelo: C85 a C87) pode ser o compacto:
+- cabeçalho com o pedido e por que o tema entrou naquele horário (com a nota da régua), a Fonte (título, id, views e o trecho
+  na fonte), Por que viraliza, a Duração com o nº de telas cheias e a Linha da história;
+- em `## Blocos`, uma lista numerada `**Nome (0:00–0:07) · TELA CHEIA n:** texto completo`, com a fala de outra pessoa entre
+  parênteses ("(Convidado: Exatamente.)");
+- a Capa, os "Fatos que a animação acerta sem desmentir o Raul" quando houver, a Autocrítica com nota e "Tira nota", e o
+  `## Fica de fora` com o tempo na fonte e o motivo.
+Bloco nunca termina em conectivo ("Então,", "por exemplo,"): a ponta cai antes dele (seção 3).
 
 **Exemplo curto, no formato** (ilustrativo; o texto real sai da transcrição conferida; tempo da montagem e da fonte):
 
@@ -304,6 +327,8 @@ alíquota tem dois números seguidos e foi para o último bloco.
 - **Todo vídeo novo, ou refeito com mudança visível, vai em prévia e PARA.** Por quê (03/10): um vídeo agendado sem aprovação
   teve de sair ("quero ver o vídeo antes de agendar"). "Faz completo" autoriza produzir até o fim, não publicar. Agendar só
   com o "pode agendar" para AQUELE vídeo; se não ficar claro se é agora ou no horário, perguntar em uma linha.
+- **O pedido explícito de deixar agendado vale como o "pode agendar"** daqueles vídeos ("quero pronto, tudo perfeito,
+  agendado", C85 a C87). "Subir público" é publicar NA HORA (C17). Na dúvida, perguntar em uma linha.
 
 ## Checklist antes de mandar o roteiro
 

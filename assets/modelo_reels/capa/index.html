@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <title>Capa do reels</title>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: #000; }
+      #root { position: relative; width: 100%; height: 100%; overflow: hidden; }
+      /* o quadro real em tela inteira; a manchete e o logo ficam no recorte 3:4 do centro (y 240 a 1680), o que a grade do
+         perfil mostra */
+      #foto { position: absolute; inset: 0; width: 1080px; height: 1920px; object-fit: cover; }
+      /* a manchete fica ABAIXO do rosto (nunca por cima dos olhos) e acima do fim do recorte 3:4 */
+      #sombra { position: absolute; left: 0; top: 1000px; width: 1080px; height: 920px;
+        background: linear-gradient(to top, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0)); }
+      .linha { position: absolute; left: 540px; transform: translateX(-50%); white-space: nowrap; font-family: "Archivo Black", sans-serif;
+        text-transform: uppercase; line-height: 1; padding: 14px 28px 12px; border-radius: 10px; box-shadow: 0 8px 22px rgba(0, 0, 0, 0.4); }
+      #l1 { top: 1180px; font-size: 64px; background: #ffffff; color: #1e1b2e; }
+      #l2 { top: 1280px; font-size: 92px; background: #f5a623; color: #1e1b2e; }
+      #l3 { top: 1410px; font-size: 54px; background: #ffffff; color: #1e1b2e; }
+      #logo { position: absolute; left: 60px; top: 280px; width: 150px; filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.45)); }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="capa" data-start="0" data-duration="1" data-width="1080" data-height="1920">
+      <img id="foto" class="clip" data-start="0" data-duration="1" data-track-index="0" src="assets/foto.jpg" alt="" />
+      <div id="sombra" class="clip" data-start="0" data-duration="1" data-track-index="1"></div>
+      <div id="l1" class="linha clip" data-start="0" data-duration="1" data-track-index="2">LINHA DE CIMA</div>
+      <div id="l2" class="linha clip" data-start="0" data-duration="1" data-track-index="3">PALAVRA-CHAVE</div>
+      <div id="l3" class="linha clip" data-start="0" data-duration="1" data-track-index="4">LINHA DE BAIXO</div>
+      <!-- o logo da marca (PNG com fundo transparente em capa/assets/logo.png); sem logo, apagar esta linha -->
+      <img id="logo" class="clip" data-start="0" data-duration="1" data-track-index="5" src="assets/logo.png" alt="" />
+    </div>
+    <script>
+      const tl = gsap.timeline({ paused: true });
+      tl.set("#l1", { rotation: -1.5 }, 0);
+      tl.set("#l2", { rotation: 1 }, 0);
+      tl.set("#l3", { rotation: -1.2 }, 0);
+      (window.__timelines = window.__timelines || {})["capa"] = tl;
+    </script>
+  </body>
+</html>
