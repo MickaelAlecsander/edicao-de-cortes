@@ -222,10 +222,32 @@ A animação toma a tela inteira, por cima do Raul, e a voz segue.
   dele: opinião, reação, piada) e de novo tela cheia de 15 a 30 s, até o fim (o fecho pode ser com o Raul). Pedido do
   dono: "no gancho ele aparece. E depois fica mais tempo da animação ocupando a tela inteira do que de fato ele
   aparecendo… animação de 15 a 30 segundos, depois volta ele de 5 a 10 segundos". O 1º foi o C90 (1:04): gancho 0–9,5 ·
-  tela cheia 9,5–28,6 · Raul 28,6–35,4 · tela cheia 35,4–56,1 · Raul 56,1–64,3.
-- **Dentro da tela cheia longa, a folha vira de página:** 2 ou 3 páginas, uma por assunto, cada uma com título próprio.
-  Na virada, o que estava na página sai junto (`vira([ids], t)`, que chama o `some(alvos, t, 0.2, {})` do modelo) e entra
-  a página nova; um som de `pagina` (camada `transicao`, −3 dB) marca a virada. Página com 4 s ou mais.
+  tela cheia 9,5–28,6 · Raul inteiro 28,6–31,0 · dividido 31,0–34,9 · tela cheia 35,4–56,1 · Raul inteiro 56,1–58,6 · dividido até 64,3.
+- **Depois de cada tela cheia, o Raul na TELA INTEIRA por 2–3 s**, e só então a tela dividida ("o Raul aparece por
+  completo por uns 2, 3 segundos. E aí já corta para ele aparecendo apenas na outra metade… não deixar cara de coisa feita
+  em massa"). As passagens, todas com papel descendo: a tela cheia desce do alto como cortina (`telaCheiaI(n, t0, t1)`);
+  no fim ela continua descendo e revela o Raul inteiro; a folha de cima desce e empurra o Raul de volta para a metade de
+  baixo (`raulCheio(tA, tB)`: a janela do Raul em 2× presa no alto; borda da folha e topo do Raul na mesma curva, sem
+  fresta). No C90: Raul inteiro 28,6–31,0 e 56,1–58,6.
+- **A tela cheia é um PALCO COM CÂMERA, não a folha de cima esticada** (o dono, 19/10: "a gente só anima a parte de cima no
+  mesmo lugar que quando tá dividido… repense toda a animação em tela cheia… interação entre personagens, elementos"; e
+  depois da prévia: "perfeito, mantém esse nível"). Kit em `scripts/imersao.js` (entra no `cenas.js` depois da base):
+  - `mundoC(dentro, id)` cria o mundo (maior que a tela) e o `hud` fixo; `camTrilha(w, [[t, px, py, zoom, qx, qy, dur,
+    ease]])` leva o ponto (px, py) do mundo para (qx, qy) da tela e, entre os planos, aproxima 3,5% devagar;
+  - personagem GRANDE (400–440 px): o rosto acima da legenda (y < 880), o corpo passando por trás dela; chão em y
+    1330–1480. A cabeça do boneco fica em `y + 83·k` (k = w/200);
+  - planos: aberto → close no objeto, no rosto, na mão (a mão erguida ao lado do rosto cabe junto; esconda o braço de
+    verdade com `#id-bd` quando a mão grande for a dele) → a câmera sobe/desce pelo cenário → chicote para outro cenário;
+  - o texto é o GRITO (`grito(hud, id, y, fs, "TEXTO | *AMARELA* !VERMELHA", bloco, palavraInicial, n, o)`): cada palavra
+    bate quando é dita, nos espaços livres (alto y 160–480; baixo y 1100–1690 com x até 920); `saiG` tira. Palavra do
+    grito que a fala não tem: `{ t0, passo }` sem bloco. Confira a n-ésima ocorrência da palavra inicial (no C90 o "já"
+    de "e já fala" puxou o "JÁ TINHA ACABADO" 10 s para trás);
+  - objetos que agem: `garraP` (a garra que desce, abre, pega e sobe), `quica`, `conta`, `barraSobe`, `vive` (nada parado),
+    `sacode` (tremor da tela cheia; o `treme` da base só sacode a folha de cima);
+  - nenhum trecho passa de ~1,5 s sem acontecimento novo; som em toda batida (pop baixo por palavra do grito, soco só na
+    palavra forte; ver `references/audio.md`).
+- **Render:** a visibilidade de cada palavra vai num `tl.set` próprio, fora do `fromTo` (no C90 a 1ª palavra de um grito
+  sumia só no render, embora aparecesse no snapshot).
 - Histórico: de 16/10 a 18/10 o padrão era 3 telas cheias de 5 s ou mais (4 acima de 2 min); o formato novo o substitui.
 - **O roteiro já nasce com elas:** cada tela cheia cai numa fala visual (exemplo concreto, número, lista, cena), nunca
   num trecho que depende do rosto do Raul. Marcar início, fim e o que aparece no roteiro da animação.

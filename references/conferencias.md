@@ -245,7 +245,8 @@ completos de cada script estão no `--help` dele.
   **Aprovado:**
   - desde 19/10: depois do gancho, telas cheias de 15 a 30 s alternando com o Raul por 5 a 10 s; somando, a tela cheia
     ocupa mais tempo que o Raul;
-  - dentro de cada tela cheia, a folha vira de página (2 ou 3 páginas, 4 s ou mais cada), sem página vazia;
+  - dentro de cada tela cheia, o palco com câmera: nenhum trecho de ~1,5 s sem acontecimento, gritos fora da faixa da
+    legenda, rosto dos personagens acima de y 880; depois de cada tela cheia, o Raul na tela inteira por 2–3 s;
   - cada uma em fala visual (exemplo, número, cena), nunca onde o rosto do Raul importa;
   - cada uma com o par de sons de transição (ver `references/audio.md`).
   O C84 tem 4, de 8,7 a 12,8 s.

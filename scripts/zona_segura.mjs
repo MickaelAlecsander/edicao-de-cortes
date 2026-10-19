@@ -61,7 +61,7 @@ for (let t = 0; t <= dur; t += PASSO) {
     const cheias = [...document.querySelectorAll(".cheia")].filter((f) => vis(f) > 0.1);
     const cobre = cheias.some((f) => f.getBoundingClientRect().top < 8);
     const pecas = [...document.querySelectorAll("#mundo [id], .cheia-dentro [id], .reels [id]")]
-      .filter((e) => !FUNDO.has(e.id) && !("fundo" in e.dataset) && !e.querySelector("[id]") && !/^(cena|c)\d+$/.test(e.id) && !/^pz\d+_/.test(e.id));   // pz = os papeizinhos que voam do carimbo (não são informação)
+      .filter((e) => !FUNDO.has(e.id) && !e.closest("[data-fundo]") && !e.querySelector("[id]") && !/^(cena|c)\d+$/.test(e.id) && !/^pz\d+_/.test(e.id));   // pz = os papeizinhos que voam do carimbo (não são informação)
     const out = [];
     for (const e of pecas) {
       const naCheia = !!e.closest(".cheia, .reels");   // o reels de vídeo real usa a zona da tela cheia
@@ -81,6 +81,9 @@ for (let t = 0; t <= dur; t += PASSO) {
       if (!r) continue;
       const Y1 = naCheia ? 1920 : 960;
       if (r.r <= 0 || r.l >= 1080 || r.b <= 0 || r.t >= Y1) continue;           // inteira fora do quadro: outra cena
+      // o palco com câmera da tela cheia (imersao.js, 19/10/2026): parte do corpo cortada pela BORDA DA TELA num close é
+      // enquadramento, não informação; o que fica dentro da tela (e todo texto do hud) continua valendo
+      if (e.closest(".mundoC") && (r.l < -2 || r.r > 1082 || r.t < -2 || r.b > 1922)) continue;
       const z = naCheia ? { l: 40, t: 150, r: 1040, b: 1700 } : { l: 40, t: 150, r: 1040, b: 955 };
       const lados = [];
       if (r.l < z.l) lados.push(["esquerda", z.l - r.l]);
