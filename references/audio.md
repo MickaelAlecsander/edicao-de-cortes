@@ -202,7 +202,7 @@ A regra é anterior à sonoplastia nova e continua dentro dela:
 
 ## 6. O par de transição de cada tela cheia
 
-Cada tela cheia (3 ou mais em vídeo de até 2 min, 4 acima) leva "um efeito sonoro que conduza a passagem sem roubar a
+Cada tela cheia (desde 19/10: blocos de 15 a 30 s alternando com o Raul; cada página que vira, um `pagina` a −3 dB) leva "um efeito sonoro que conduza a passagem sem roubar a
 fala" (pedido de 15/10). O padrão do C82 ao C84:
 
 | Momento | Deixa | Camada e `db` |

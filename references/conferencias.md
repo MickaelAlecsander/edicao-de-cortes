@@ -243,9 +243,9 @@ completos de cada script estão no `--help` dele.
   python -c "import json; j=json.load(open('assets/tela_cheia.json')); print(len(j), [(a, round(b-a-1, 1)) for a, b in j])"
   ```
   **Aprovado:**
-  - 3 ou mais telas cheias em vídeo de até 2 min, 4 acima disso;
-  - cada uma com 5 s ou mais de folha parada em cima (a janela inclui ~1 s de subida e descida);
-  - a 1ª logo depois do gancho, e as outras espalhadas, sem colar uma na outra e sem cair no fim;
+  - desde 19/10: depois do gancho, telas cheias de 15 a 30 s alternando com o Raul por 5 a 10 s; somando, a tela cheia
+    ocupa mais tempo que o Raul;
+  - dentro de cada tela cheia, a folha vira de página (2 ou 3 páginas, 4 s ou mais cada), sem página vazia;
   - cada uma em fala visual (exemplo, número, cena), nunca onde o rosto do Raul importa;
   - cada uma com o par de sons de transição (ver `references/audio.md`).
   O C84 tem 4, de 8,7 a 12,8 s.

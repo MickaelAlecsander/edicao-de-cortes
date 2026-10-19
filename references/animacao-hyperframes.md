@@ -216,11 +216,17 @@ faltava na cena a cena era vida dentro da cena.
 
 ## 6. A TELA CHEIA
 
-Padrão desde 16/10: a animação toma a tela inteira, por cima do Raul, e a voz segue.
-- **3 vezes ou mais em vídeo de até 2 min; 4 acima de 2 min; cada uma com 5 s ou mais.** A 1ª vem logo depois do gancho;
-  as outras se espalham, sem colar uma na outra e sem cair no fim. Por quê: o teste de 15/10 (uma logo após o gancho e
-  outra no meio) agradou, e no C82 o dono pediu mais: "pelo menos três vezes, de pelo menos cinco segundos cada… quatro
-  vezes, já que tem mais de 2 minutos". O C82 teve 4 (0:15, 1:00, 1:59, 2:41); o C84, 4; o C83, 3.
+A animação toma a tela inteira, por cima do Raul, e a voz segue.
+- **Formato novo (19/10): a animação domina o tempo.** O gancho fica como sempre (metade/metade, o Raul embaixo); logo
+  depois vem uma TELA CHEIA de **15 a 30 s**, o Raul volta por **5 a 10 s** (metade/metade, numa fala que pede o rosto
+  dele: opinião, reação, piada) e de novo tela cheia de 15 a 30 s, até o fim (o fecho pode ser com o Raul). Pedido do
+  dono: "no gancho ele aparece. E depois fica mais tempo da animação ocupando a tela inteira do que de fato ele
+  aparecendo… animação de 15 a 30 segundos, depois volta ele de 5 a 10 segundos". O 1º foi o C90 (1:04): gancho 0–9,5 ·
+  tela cheia 9,5–28,6 · Raul 28,6–35,4 · tela cheia 35,4–56,1 · Raul 56,1–64,3.
+- **Dentro da tela cheia longa, a folha vira de página:** 2 ou 3 páginas, uma por assunto, cada uma com título próprio.
+  Na virada, o que estava na página sai junto (`vira([ids], t)`, que chama o `some(alvos, t, 0.2, {})` do modelo) e entra
+  a página nova; um som de `pagina` (camada `transicao`, −3 dB) marca a virada. Página com 4 s ou mais.
+- Histórico: de 16/10 a 18/10 o padrão era 3 telas cheias de 5 s ou mais (4 acima de 2 min); o formato novo o substitui.
 - **O roteiro já nasce com elas:** cada tela cheia cai numa fala visual (exemplo concreto, número, lista, cena), nunca
   num trecho que depende do rosto do Raul. Marcar início, fim e o que aparece no roteiro da animação.
 - **Usar a tela cheia para cobrir o trecho em que a fonte tira o Raul da tela.** No C84, a foto da Saveiro e a do
