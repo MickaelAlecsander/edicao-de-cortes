@@ -248,6 +248,23 @@ A animação toma a tela inteira, por cima do Raul, e a voz segue.
     palavra forte; ver `references/audio.md`).
 - **Render:** a visibilidade de cada palavra vai num `tl.set` próprio, fora do `fromTo` (no C90 a 1ª palavra de um grito
   sumia só no render, embora aparecesse no snapshot).
+- **Lições dos três de 20/10 (C91–C93):**
+  - vídeo de ~1:30 ou mais: 3 telas cheias; até ~1:20, 2 bastam;
+  - o `saiG` vem DEPOIS da última palavra do grito: se ele sai antes, a palavra que ainda não tinha entrado aparece depois
+    e fica na tela até o fim (o "HORA" do C93 ficou 12 s embaixo de todos os outros gritos). Grito de mais de
+    ~0,8·fs·letras > 960 px estoura a largura: fonte menor ou mais linhas;
+  - fonte de rosto grande (close): no Raul inteiro a legenda tampa a testa; `raulCheio(tA, tB, 72, -420)` sobe a legenda
+    para y 470–610 e a devolve na descida da folha. Em podcast (rosto pequeno) não usar: ela cairia nos olhos;
+  - fonte em tela dividida (slide + painel do Raul): a janela ampliada 2× fica 3× a fonte (só o rosto, mole). Rode o
+    `cortar.py` de novo numa pasta temporária com `janela` 1252×1920 e os mesmos blocos (sai com os mesmos quadros) e use
+    o resultado como `assets/raul_cheio.mp4`; o `montar.py` põe por cima da janela um `#raul-cheio-cam` (1080×1920,
+    `data-k` = zoom da janela ÷ zoom da faixa, 0,8629 no painel de 704) com o vídeo de 1252 em `left:-86px`, e o
+    `raulCheio()` o mostra no Raul inteiro e o encolhe até coincidir com a janela na descida da folha (troca invisível);
+  - a cabeça do boneco: o `y` do `cabecaP()` − 60k + 154 é o CENTRO da cabeça (raio ~110k); serve para chapéu, nariz,
+    pesos em cima da cabeça e para o close no rosto;
+  - no recuo da câmera (zoom 0,3), o cenário tem de ser bem maior que a tela (no C93 aparecia o papel liso em cima e
+    embaixo); a metade de baixo vazia ganha uma multidão (`multidaoN`) embaixo da linha do tempo;
+  - `erros_js.mjs` recebe o `index.html`, não a pasta (com a pasta ele diz ✓ sem abrir a página).
 - Histórico: de 16/10 a 18/10 o padrão era 3 telas cheias de 5 s ou mais (4 acima de 2 min); o formato novo o substitui.
 - **O roteiro já nasce com elas:** cada tela cheia cai numa fala visual (exemplo concreto, número, lista, cena), nunca
   num trecho que depende do rosto do Raul. Marcar início, fim e o que aparece no roteiro da animação.

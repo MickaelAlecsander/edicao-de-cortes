@@ -155,7 +155,9 @@
         // presa no alto) e a folha de cima está escondida acima; a tela cheia desce e mostra o Raul inteiro, que assenta com um
         // zoom curto. Em tB a folha de cima desce do alto e empurra a janela de volta para a metade de baixo (as duas com a
         // mesma curva: a borda da folha encosta na borda do Raul o caminho todo, sem fresta).
-        function raulCheio(tA, tB, dx = 72) {
+        // legY: no Raul em close o rosto enche o meio da tela; a legenda sobe para cima da cabeça (−420 = y 470–610) e volta
+        // quando a folha desce (C91, 19/10: a legenda tampava a testa dele)
+        function raulCheio(tA, tB, dx = 72, legY = 0) {
           tl.set("#topo", { y: -990 }, tA - 0.02);
           tl.set("#rasgo", { y: -990, autoAlpha: 0 }, tA - 0.02);
           tl.set("#raul-janela", { y: -960, x: dx, scale: 2, transformOrigin: "50% 0%" }, tA - 0.02);
@@ -163,6 +165,21 @@
           tl.set("#rasgo", { autoAlpha: 1 }, tB);
           tl.to(["#topo", "#rasgo"], { y: 0, duration: 0.55, ease: "power3.inOut" }, tB);
           tl.to("#raul-janela", { y: 0, x: 0, scale: 1, duration: 0.55, ease: "power3.inOut" }, tB);
+          // fonte em tela dividida (slide + painel do Raul, C93): a janela ampliada 2× ficaria 3× a fonte, só o rosto e
+          // mole. O montar.py põe então o #raul-cheio-cam: o painel INTEIRO a 1,78× (cortar.py com janela 1252×1920), por
+          // cima da janela; na descida ele encolhe para o tamanho da janela (data-k) e some quando os dois coincidem
+          const rc = document.getElementById("raul-cheio-cam");
+          if (rc) {
+            tl.set(rc, { autoAlpha: 0 }, 0);
+            tl.set(rc, { autoAlpha: 1, y: 0, scale: 1, transformOrigin: "50% 0%" }, tA - 0.02);
+            tl.fromTo(rc, { scale: 1.06 }, { scale: 1, duration: 1.0, ease: "power2.out", immediateRender: false }, tA);
+            tl.to(rc, { y: 960, scale: +rc.dataset.k, duration: 0.55, ease: "power3.inOut" }, tB);
+            tl.set(rc, { autoAlpha: 0 }, tB + 0.56);
+          }
+          if (legY) {
+            tl.to("#leg", { y: legY, duration: 0.4, ease: "power3.inOut" }, tA - 0.1);
+            tl.to("#leg", { y: 0, duration: 0.55, ease: "power3.inOut" }, tB);
+          }
           RAUL_CHEIO.push([tA, tB + 0.55]);
         }
         const RAUL_CHEIO = [];
