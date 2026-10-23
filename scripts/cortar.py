@@ -31,6 +31,8 @@ FADE = 0.015   # o bloco pode pedir "fade_fim" maior quando o fim é emendado se
 # acima disso trava o corte. A saída é mudar o bloco para a pausa mais perto; só quando não existe pausa (palavras
 # emendadas) a ponta entra em "fala_ok": {"fim": "motivo"} no bloco, com o envelope de 5 ms conferido e o motivo escrito.
 # Silêncio não basta no FIM: o fechamento de "p/t/k" dentro da palavra também é silêncio (veja rabo()).
+# Fonte com ruído de fundo constante (C95, 22/10/2026: selfie no carro, piso −35 dB, nenhum vale a −40): "limite" no
+# cortes.json, ~1 dB acima do piso, o mesmo do `pausas.py --limite`. O rabo()/cabeca() seguem valendo.
 LIMITE = -40.0
 
 
@@ -145,7 +147,7 @@ def main():
         t0, db0 = silencio(src, *b["ini"])
         t1, db1 = silencio(src, *b["fim"])
         for lado, db in (("ini", db0), ("fim", db1)):
-            if db > LIMITE and lado not in b.get("fala_ok", {}):
+            if db > cfg.get("limite", LIMITE) and lado not in b.get("fala_ok", {}):
                 barrados.append("%s.%s (%.1f dB)" % (b["id"], lado, db))
         cb = cabeca(src, t0)
         if cb and "ini" not in b.get("fala_ok", {}):
@@ -232,7 +234,7 @@ def main():
 
     if barrados:
         raise SystemExit("⛔ ponta em fala, acima de %d dB: %s\n   Mude o bloco para a pausa mais perto. Sem pausa, confira o "
-                         "envelope de 5 ms e escreva o motivo em \"fala_ok\" no bloco." % (LIMITE, ", ".join(barrados)))
+                         "envelope de 5 ms e escreva o motivo em \"fala_ok\" no bloco." % (cfg.get("limite", LIMITE), ", ".join(barrados)))
     n = len(blocos)
     # a voz sai do filtro direto em PCM (raul_bruto.wav). Antes ela era tirada do AAC do raul.mp4: uma geração de perda a
     # mais, somada ao AAC da fonte, ao do render e ao da prévia, deixava a voz "vibrada", com cara de estourada (C23, 05/10)

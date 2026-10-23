@@ -152,12 +152,17 @@ def perfil(src, t):
 
 
 def main():
+    global LIMITE
     args, palavras = sys.argv[1:], None
     if len(args) < 2 or "-h" in args or "--help" in args:
         print(__doc__)
         sys.exit(0)
     com_perfil = "--perfil" in args
     args = [x for x in args if x != "--perfil"]
+    if "--limite" in args:   # fonte com ruído de fundo constante: pausa = abaixo de DB (padrão −40), ~1 dB acima do piso (C95)
+        i = args.index("--limite")
+        LIMITE = float(args[i + 1])
+        del args[i:i + 2]
     if "--palavras" in args:
         i = args.index("--palavras")
         palavras = json.load(open(args[i + 1], encoding="utf-8"))
