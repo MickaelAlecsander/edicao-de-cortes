@@ -167,13 +167,14 @@
           tl.to("#raul-janela", { y: 0, x: 0, scale: 1, duration: 0.55, ease: "power3.inOut" }, tB);
           // fonte em tela dividida (slide + painel do Raul, C93): a janela ampliada 2× ficaria 3× a fonte, só o rosto e
           // mole. O montar.py põe então o #raul-cheio-cam: o painel INTEIRO a 1,78× (cortar.py com janela 1252×1920), por
-          // cima da janela; na descida ele encolhe para o tamanho da janela (data-k) e some quando os dois coincidem
+          // cima da janela; na descida ele encolhe para o tamanho da janela (data-k) e some quando os dois coincidem. data-y: até
+          // onde ele desce (padrão 960); na fonte VERTICAL (C95) é o quadro inteiro 1:1 e desce 960 − y do recorte
           const rc = document.getElementById("raul-cheio-cam");
           if (rc) {
             tl.set(rc, { autoAlpha: 0 }, 0);
             tl.set(rc, { autoAlpha: 1, y: 0, scale: 1, transformOrigin: "50% 0%" }, tA - 0.02);
             tl.fromTo(rc, { scale: 1.06 }, { scale: 1, duration: 1.0, ease: "power2.out", immediateRender: false }, tA);
-            tl.to(rc, { y: 960, scale: +rc.dataset.k, duration: 0.55, ease: "power3.inOut" }, tB);
+            tl.to(rc, { y: +(rc.dataset.y || 960), scale: +rc.dataset.k, duration: 0.55, ease: "power3.inOut" }, tB);
             tl.set(rc, { autoAlpha: 0 }, tB + 0.56);
           }
           if (legY) {
@@ -222,6 +223,11 @@
           tl.set(f, { autoAlpha: 0 }, t1 + 0.5);
           tl.to("#marca", { autoAlpha: 0, duration: 0.2 }, t0 - 0.5);
           tl.to("#marca", { autoAlpha: 0.8, duration: 0.3 }, t1 + 0.42);
+          // REGRA (Mickael, 22/10/2026): sem a legenda do meio na tela cheia ("a legenda já está aparecendo durante a animação
+          // compondo a cena": os gritos). Ela some quando a cortina desce e volta quando a cortina sai (Raul cheio e folha
+          // dividida têm legenda). Fala que importa e não tem grito vira balão (fala()) na própria cena.
+          tl.to("#leg", { autoAlpha: 0, duration: 0.2 }, t0 - 0.45);
+          tl.to("#leg", { autoAlpha: 1, duration: 0.2 }, t1);
           FULL.push([t0 - 0.55, t1 + 0.5]);
           return dentro;
         }

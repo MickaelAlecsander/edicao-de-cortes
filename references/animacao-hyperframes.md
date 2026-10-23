@@ -229,6 +229,14 @@ A animação toma a tela inteira, por cima do Raul, e a voz segue.
   no fim ela continua descendo e revela o Raul inteiro; a folha de cima desce e empurra o Raul de volta para a metade de
   baixo (`raulCheio(tA, tB)`: a janela do Raul em 2× presa no alto; borda da folha e topo do Raul na mesma curva, sem
   fresta). No C90: Raul inteiro 28,6–31,0 e 56,1–58,6.
+- **Sem a legenda do meio na tela cheia** (regra do dono, 22/10, C95: "a legenda já está aparecendo durante a animação
+  compondo a cena"). O `telaCheiaI()` esconde o `#leg` quando a cortina desce e devolve quando ela sai; no Raul inteiro e
+  na folha dividida ela continua. Então, na tela cheia, toda fala está na cena: grito para a fala do narrador e balão
+  (`fala()`) para a fala do outro que não tem grito; trecho de mais de ~1 s sem grito nenhum ganha um. E rosto fora da
+  faixa onde a legenda fica fora dela (y ~916–1015): personagem de pé no chão do palco (y 1480) com 420 ou mais de largura.
+- **Fonte vertical (short):** o Raul inteiro é o quadro original 1:1 (`raul_cheio.mp4`: `cortar.py` com janela
+  1080×1920, mesmos blocos, numa pasta à parte), com a faixa da legenda gravada desfocada; no `#raul-cheio-cam`,
+  `data-k="1"` e `data-y` = 960 − y do recorte (até onde ele desce).
 - **A tela cheia é um PALCO COM CÂMERA, não a folha de cima esticada** (o dono, 19/10: "a gente só anima a parte de cima no
   mesmo lugar que quando tá dividido… repense toda a animação em tela cheia… interação entre personagens, elementos"; e
   depois da prévia: "perfeito, mantém esse nível"). Kit em `scripts/imersao.js` (entra no `cenas.js` depois da base):
