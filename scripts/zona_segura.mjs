@@ -41,6 +41,16 @@ await p.addInitScript(() => { window.__timelines = {}; });
 await p.goto("file:///" + path.join(pasta, "index.html").split(path.sep).join("/"));
 for (let k = 0; k < 60 && !(await p.evaluate(() => !!(window.__timelines && window.__timelines.main))); k++) await p.waitForTimeout(500);
 await p.waitForTimeout(1000);
+// a Archivo Black não está instalada no Windows: sem ela o Chrome mede com uma fonte mais estreita e dá ✓ em grito que o
+// render (que usa a de verdade) corta na borda (23/10/2026: um grito saiu cortado e outro vídeo tinha 13 peças fora)
+await p.addStyleTag({ url: "https://fonts.googleapis.com/css2?family=Archivo+Black&family=IBM+Plex+Mono:wght@700&display=block" });
+await p.evaluate(async () => { await document.fonts.load('100px "Archivo Black"', "AÇÃO"); await document.fonts.load('700 40px "IBM Plex Mono"', "A"); await document.fonts.ready; });
+await p.waitForTimeout(500);
+if (!(await p.evaluate(() => document.fonts.check('100px "Archivo Black"')))) {
+  console.log("⛔ a Archivo Black não carregou (sem internet?): a medida não vale");
+  await b.close();
+  process.exit(1);
+}
 
 const amostras = [];
 for (let t = 0; t <= dur; t += PASSO) {
