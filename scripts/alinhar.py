@@ -76,7 +76,9 @@ def por_extenso(texto):
 
 def normaliza(w):
     w = unicodedata.normalize("NFD", w.lower())
-    w = "".join(c for c in w if c in BUNDLE.get_dict())  # a-z, ' e * ; tira acento, pontuação e o resto
+    # a-z, ' e * ; tira acento, pontuação e o resto. O "-" do dicionário é o BRANCO do CTC: palavra com hífen ("chama-se")
+    # derrubava o forced_align com "targets Tensor shouldn't contain blank index" (R01, 18/10/2026)
+    w = "".join(c for c in w if c in BUNDLE.get_dict() and c != "-")
     w = re.sub(r"^h(?=[aeiou])", "", w)  # "h" inicial é mudo ("herança" soa "erança"; C84)
     # letra dobrada vira uma: o CTC exige um "branco" entre duas letras iguais e empurrava a 2ª para depois da pausa
     # ("Leman|n" no C84 saía DENTRO de Lemann; o mesmo valia para isso, carro, nosso), e rr/ss são um som só
