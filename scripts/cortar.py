@@ -238,7 +238,10 @@ def main():
     n = len(blocos)
     # a voz sai do filtro direto em PCM (raul_bruto.wav). Antes ela era tirada do AAC do raul.mp4: uma geração de perda a
     # mais, somada ao AAC da fonte, ao do render e ao da prévia, deixava a voz "vibrada", com cara de estourada (C23, 05/10)
-    fc = "".join(filtros) + "%sconcat=n=%d:v=1:a=1[v][a0];[a0]asplit=2[a][ab]" % (rot, n)
+    # "espelho": true no cortes.json espelha o vídeo na horizontal (o canal do Raul usa desde 23/10/2026, como teste de RPM:
+    # o quadro deixa de ser idêntico ao do canal de origem). Texto gravado na fonte sai ao contrário: fora do recorte ou desfocado
+    esp = ",hflip" if cfg.get("espelho", False) else ""
+    fc = "".join(filtros) + "%sconcat=n=%d:v=1:a=1[v0][a0];[v0]null%s[v];[a0]asplit=2[a][ab]" % (rot, n, esp)
     mp4 = os.path.join(pasta, "assets", "raul.mp4")
     bruto = os.path.join(pasta, "assets", "raul_bruto.wav")
     # "veryfast" com CRF 14: mesmo tamanho e mesma qualidade que o "slow" num arquivo intermediário, em 1/4 do tempo (10/10)

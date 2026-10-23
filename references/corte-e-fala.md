@@ -178,6 +178,7 @@ Escrever pelo `cortes_gerar.py`, com o porquê de cada ponta em comentário, nun
 | `respiro`, `fade_fim`, `fala_ok` | ver a seção 3 |
 | `parado_ok` | libera o `travada.py` num bloco que não é o Raul (gráfico em tela cheia) |
 | `tapar: [[máscara.png, desde], …]` | texto da fonte que invade o recorte (C30) |
+| `espelho` (no topo) | `true` espelha o vídeo na horizontal. O canal do Raul usa desde 23/10/2026, num teste de RPM: o quadro deixa de ser idêntico ao da origem. O `raul_cheio.mp4` precisa do mesmo lado. Texto gravado sai ao contrário, então fica fora do recorte ou desfocado |
 
 - **Pôr `trocas` no quadro exato, sem arredondar.** O t é o pts do PRIMEIRO quadro novo, como o `trocas.py` dá. No C21, a
   troca arredondada mostrava 1 ou 2 quadros da outra câmera com o recorte errado.
