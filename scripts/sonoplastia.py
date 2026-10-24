@@ -71,6 +71,9 @@ CAMADA = {
     "musica":    {"nivel": -11.0, "duck": 4.0, "sala": 0.20},   # pizzicato, brilho
     "textura":   {"nivel": -16.0, "duck": 4.0, "sala": 0.06},   # passos, tiques, caneta, rolagem
 }
+# 23/10/2026: os efeitos tinham ficado baixos demais (as folhas de deixas foram baixando vídeo a vídeo, destaque de −4 para −15 dB
+# contra a voz). O REALCE sobe todas as camadas menos a transição; o TETO e a FOLGA continuam garantindo a voz por cima.
+REALCE = {"destaque": 6.0, "acao": 5.0, "miudo": 5.0, "musica": 4.0, "textura": 3.0, "transicao": 0.0}
 CARVE = 2.0          # dB a mais na faixa 300 Hz–4,5 kHz enquanto há fala
 FOLGA = 7.0          # a voz fica pelo menos isso acima dos efeitos na faixa da fala, a cada 10 ms
 FOLGA_DESTAQUE = 3.0 # a pancada combinada com a palavra (carimbo no "delírio", BUM no "buraco"): folga menor, grave livre
@@ -732,7 +735,7 @@ def gerar(c, vref):
     fim = np.interp(np.arange(len(x)), [len(x) - 64, len(x) - 1], [1, 0])        # sem estalo no fim
     x *= fim[:, None] if x.ndim == 2 else fim
     pico = curto(mono(x)).max() if len(x) > int(0.05 * SR) else curto(np.pad(mono(x), (0, int(0.06 * SR)))).max()
-    alvo = vref + CAMADA[c["camada"]]["nivel"] + c.get("db", 0) + r.uniform(-1, 1)
+    alvo = vref + CAMADA[c["camada"]]["nivel"] + REALCE.get(c["camada"], 0.0) + c.get("db", 0) + r.uniform(-1, 1)
     x *= 10 ** ((alvo - pico) / 20)
     if x.ndim == 1:
         pan = np.clip(c.get("pan", 0.0), -1, 1) * PAN_MAX
