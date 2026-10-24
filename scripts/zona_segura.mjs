@@ -44,7 +44,7 @@ await p.waitForTimeout(1000);
 // a Archivo Black não está instalada no Windows: sem ela o Chrome mede com uma fonte mais estreita e dá ✓ em grito que o
 // render (que usa a de verdade) corta na borda (23/10/2026: um grito saiu cortado e outro vídeo tinha 13 peças fora)
 await p.addStyleTag({ url: "https://fonts.googleapis.com/css2?family=Archivo+Black&family=IBM+Plex+Mono:wght@700&display=block" });
-await p.evaluate(async () => { await document.fonts.load('100px "Archivo Black"', "AÇÃO"); await document.fonts.load('700 40px "IBM Plex Mono"', "A"); await document.fonts.ready; });
+await p.evaluate(async () => { try { await document.fonts.load('100px "Archivo Black"', "AÇÃO"); await document.fonts.load('700 40px "IBM Plex Mono"', "A"); await document.fonts.ready; } catch (e) {} });
 await p.waitForTimeout(500);
 if (!(await p.evaluate(() => document.fonts.check('100px "Archivo Black"')))) {
   console.log("⛔ a Archivo Black não carregou (sem internet?): a medida não vale");
@@ -94,13 +94,14 @@ for (let t = 0; t <= dur; t += PASSO) {
       // o palco com câmera da tela cheia (imersao.js, 19/10/2026): parte do corpo cortada pela BORDA DA TELA num close é
       // enquadramento, não informação; o que fica dentro da tela (e todo texto do hud) continua valendo
       if (e.closest(".mundoC") && (r.l < -2 || r.r > 1082 || r.t < -2 || r.b > 1922)) continue;
-      const z = naCheia ? { l: 40, t: 150, r: 1040, b: 1700 } : { l: 40, t: 150, r: 1040, b: 955 };
+      // zona da TELA desde 23/10/2026 (o TikTok corta até ~100 px de cada lado no celular 20:9/21:9; abas/pesquisa até ~250 px)
+      const z = naCheia ? { l: 110, t: 270, r: 970, b: 1700 } : { l: 110, t: 270, r: 970, b: 955 };
       const lados = [];
       if (r.l < z.l) lados.push(["esquerda", z.l - r.l]);
       if (r.r > z.r) lados.push(["direita", r.r - z.r]);
       if (r.t < z.t) lados.push(["em cima", z.t - r.t]);
       if (r.b > z.b) lados.push(["embaixo", r.b - z.b]);
-      if (naCheia && r.b > 900 && r.t < 1700 && r.r > 920) lados.push(["nos botões", r.r - 920]);
+      if (naCheia && r.b > 900 && r.t < 1700 && r.r > 880) lados.push(["nos botões", r.r - 880]);
       const ruins = lados.filter(([, px]) => px > 6);
       if (ruins.length) out.push({ id: e.id, onde: naCheia ? "tela cheia" : "folha", lados: ruins.map(([l, px]) => [l, Math.round(px)]) });
     }

@@ -22,6 +22,22 @@
           `.virada { position: absolute; left: 0; top: -60px; width: 1260px; height: 2040px; z-index: 60; pointer-events: none;` +
           ` background: #efe6d3 url(assets/papel.png) repeat; box-shadow: -34px 0 44px rgba(30,27,46,.30), 34px 0 44px rgba(30,27,46,.22); }`;
         document.head.appendChild(estIm);
+        // ── ÁREA DE SEGURANÇA DO TIKTOK (23/10/2026: textos cortados nas laterais e embaixo da barra de pesquisa) ──
+        // No celular 20:9/21:9 o TikTok amplia o 9:16 para preencher a tela e corta de 50 a 100 px de cada lado, e a barra
+        // de abas/pesquisa cobre até ~250 px do alto. Tudo o que as cenas desenham (folha e tela cheia) fica reduzido a 0,86
+        // em volta de (540, 1007): o que respeitava a zona antiga (x 40–1040, y ≥ 150, botões x ≤ 920) cai na nova
+        // (x 110–970, y ≥ 270, botões x ≤ 867). O fundo de papel continua cobrindo a tela toda; só o conteúdo encolhe.
+        // O zona_segura.mjs confere a zona nova.
+        const ZONA_K = 0.86, ZONA_O = "540px 1007px";
+        (() => {
+          const m = document.getElementById("mundo");
+          if (!m || m.parentNode.id === "zona-f") return;
+          const zf = document.createElement("div");
+          zf.id = "zona-f"; zf.dataset.layoutAllowOverflow = "";
+          zf.style.cssText = `position:absolute;left:0;top:0;width:1080px;height:1920px;transform-origin:${ZONA_O};transform:scale(${ZONA_K});`;
+          m.parentNode.insertBefore(zf, m);
+          zf.appendChild(m);
+        })();
 
         // manchete(pai, id, x, y, w, fs, "O *ESTADO*, COM | E !MAIÚSCULO", bloco, palavraInicial, n, o)
         //   · cada palavra entra no instante em que é DITA: procura a palavra na fala, em ordem, a partir de T(palavraInicial);
@@ -215,6 +231,7 @@
           raiz.insertBefore(f, document.querySelector("#leg"));
           const dentro = document.createElement("div");
           dentro.className = "cheia-dentro"; dentro.dataset.layoutAllowOverflow = "";
+          dentro.style.transformOrigin = ZONA_O; dentro.style.transform = `scale(${ZONA_K})`;   // a área de segurança (ver ZONA_K)
           f.appendChild(dentro);
           tl.set(f, { autoAlpha: 0, y: -1990 }, 0);
           tl.set(f, { autoAlpha: 1 }, t0 - 0.55);

@@ -19,7 +19,7 @@ FOTO = os.path.join(RAIZ, "assets", "modelo", "marca", "avatar_128.jpg")
 CONTA = "@cortesdoraulsena"
 CSS = """
       /* marca do canal (scripts/marca.py): o @ e a foto de perfil, parados, sutis */
-      #marca { position: absolute; left: 30px; top: __TOPO__px; display: flex; align-items: center; gap: 12px; opacity: 0.8;
+      #marca { position: absolute; left: 115px; top: __TOPO__px; display: flex; align-items: center; gap: 12px; opacity: 0.8;
         pointer-events: none; z-index: 30; }
       #marca img { width: 56px; height: 56px; border-radius: 50%; border: 3px solid rgba(248, 242, 228, 0.92); object-fit: cover;
         box-shadow: 0 3px 10px rgba(0, 0, 0, 0.35); }
